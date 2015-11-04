@@ -97,8 +97,8 @@
     -->
     <scm>
         <url>https://github.com/AzGoalie/ddf.git</url>
-        <connection>scm:git:git://github.com/AzGoalie/ddf.git</connection>
-        <developerConnection>scm:git:git://github.com/AzGoalie/ddf.git</developerConnection>
+        <connection>scm:git:https://github.com/AzGoalie/ddf.git</connection>
+        <developerConnection>scm:git:https://github.com/AzGoalie/ddf.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
