@@ -212,7 +212,7 @@ class SortedQueryMonitor implements Runnable {
                 String sourceId = getSourceIdFromRequest(expiredSource);
                 LOGGER.info("Search timed out for {}", sourceId);
                 processingDetails.add(new ProcessingDetailsImpl(sourceId, new TimeoutException()));
-            }
+             }
         }
     }
 
@@ -222,7 +222,7 @@ class SortedQueryMonitor implements Runnable {
             if (interruptedSource != null) {
                 String sourceId = getSourceIdFromRequest(interruptedSource);
                 LOGGER.info("Search interrupted for {}", sourceId);
-                processingDetails.add(new ProcessingDetailsImpl(sourceId, interruptedException));
+ ,               processingDetails.add(new ProcessingDetailsImpl(sourceId, interruptedException));
             }
         }
     }
@@ -283,7 +283,7 @@ class SortedQueryMonitor implements Runnable {
         } catch (StopProcessingException e) {
             LOGGER.info("Plugin stopped processing", e);
         }
-        return new SourceResponseImpl(queryRequest, queryResponse.getResults());
+        return new SourceResponseImpl(queryRequest, queryResponse.getResults(), queryResponse.getHits());
     }
 
 }
