@@ -551,6 +551,7 @@
         <module>validator</module>
         <module>confluence</module>
         <module>async</module>
+        <module>component-tests</module>
     </modules>
     <build>
         <plugins>
