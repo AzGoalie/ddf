@@ -13,12 +13,14 @@
 
     <properties>
         <slf4j.version>1.7.24</slf4j.version>
-        <pax.exam.version>4.10.0</pax.exam.version>
+        <pax.exam.version>4.11.0</pax.exam.version>
         <pax.url.version>2.5.2</pax.url.version>
         <osgi.version>6.0.0</osgi.version>
+        <awaitility.version>3.0.0</awaitility.version>
     </properties>
 
     <dependencies>
+        <!-- Modules that are being tested -->
         <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-directorymonitor</artifactId>
@@ -31,8 +33,14 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-camelcomponent</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-        <!-- Logging dependencies -->
+        <!-- Utility test dependencies -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -43,6 +51,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
             <scope>test</scope>
         </dependency>
 
