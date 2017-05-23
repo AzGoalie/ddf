@@ -14,7 +14,10 @@
 package ddf.catalog.tests;
 
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
@@ -22,20 +25,27 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.CoreOptions.propagateSystemProperty;
 import static org.ops4j.pax.exam.CoreOptions.streamBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
 import static org.ops4j.pax.tinybundles.core.TinyBundles.bundle;
 import static org.ops4j.pax.tinybundles.core.TinyBundles.withBnd;
-import static ddf.catalog.tests.KarafConfigurator.karafConfiguration;
+import static ddf.catalog.tests.configurators.KarafConfigurator.karafConfiguration;
+import static ddf.catalog.tests.features.CamelFeatures.CamelFeature.CAMEL;
 import static ddf.catalog.tests.features.CamelFeatures.camelFeatures;
+import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_BINDINGS_SOAP;
+import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_FRONTEND_JAVASCRIPT;
+import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_JAXRS;
+import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_RT_SECURITY_SAML;
+import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_WS_POLICY;
+import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_WS_SECURITY;
 import static ddf.catalog.tests.features.CxfFeatures.cxfFeatures;
+import static ddf.catalog.tests.features.KarafSpringFeatures.SpringFeature.SPRING;
+import static ddf.catalog.tests.features.KarafSpringFeatures.karafSpringFeatures;
+import static ddf.catalog.tests.features.KarafStandardFeatures.StandardFeature.STANDARD;
 import static ddf.catalog.tests.features.KarafStandardFeatures.karafStandardFeatures;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Dictionary;
-import java.util.Properties;
+import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -47,7 +57,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.ConfigurationManager;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
@@ -60,6 +69,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.io.Files;
 
 import ddf.catalog.CatalogFramework;
+import ddf.catalog.content.data.ContentItem;
+import ddf.catalog.tests.configurators.KeystoreTruststoreConfigurator;
 import ddf.catalog.tests.mocks.MockCatalogFramework;
 import ddf.catalog.tests.mocks.MockSecurityManager;
 
@@ -89,25 +100,23 @@ public class DirectoryMonitorTest {
 
         return options(testDependencies(),
                 karafConfiguration(),
-                karafStandardFeatures("standard", "spring"),
-                //                debugConfiguration(),
-                keepRuntimeFolder(),
-                camelFeatures("camel"),
-                cxfFeatures("cxf-rt-security-saml",
-                        "cxf-bindings-soap",
-                        "cxf-ws-policy",
-                        "cxf-ws-security",
-                        "cxf-frontend-javascript",
-                        "cxf-jaxrs"),
+                karafStandardFeatures(STANDARD),
+                karafSpringFeatures(SPRING),
+                camelFeatures(CAMEL),
+                cxfFeatures(CXF_RT_SECURITY_SAML,
+                        CXF_BINDINGS_SOAP,
+                        CXF_WS_POLICY,
+                        CXF_WS_SECURITY,
+                        CXF_FRONTEND_JAVASCRIPT,
+                        CXF_JAXRS),
                 keystoreAndTruststoreConfig(),
-                //                mockBundle(MockCatalogFramework.class),
                 mockBundle(MockSecurityManager.class),
                 contentDirectoryMonitorDependencies(),
                 createContentDirectoryMonitorConfig());
     }
 
     private Option testDependencies() {
-        return mavenBundle("org.awaitility", "awaitility", "3.0.0");
+        return startBundle("org.awaitility", "awaitility");
     }
 
     private Option keystoreAndTruststoreConfig() {
@@ -129,62 +138,52 @@ public class DirectoryMonitorTest {
                         monitoredDirectory.getCanonicalPath()));
     }
 
-    private Option apacheCommons() {
-        return composite(mavenBundle("org.apache.commons", "commons-lang3", "3.4").start(),
-                mavenBundle("commons-lang", "commons-lang", "2.6").start(),
-                mavenBundle("commons-io", "commons-io", "2.5").start(),
-                mavenBundle("commons-collections", "commons-collections", "3.2.2").start(),
-                mavenBundle("commons-configuration", "commons-configuration", "1.10").start());
-    }
-
     private Option contentDirectoryMonitorDependencies() {
-        return composite(apacheCommons(),
-                mavenBundle("ddf.platform.util", "util-uuidgenerator-api", getDdfVersion()).start(),
-                mavenBundle("ddf.platform.util",
-                        "util-uuidgenerator-impl",
-                        getDdfVersion()).start(),
-                mavenBundle("ddf.catalog.core",
-                        "catalog-core-camelcontext",
-                        getDdfVersion()).start(),
-                mavenBundle("com.google.guava", "guava", "18.0").start(),
-                mavenBundle("ddf.platform.api", "platform-api", getDdfVersion()).start(),
-                mavenBundle("org.codice.thirdparty", "gt-opengis", "8.4_1").start(),
-                mavenBundle("ddf.catalog.core", "catalog-core-api", getDdfVersion()).start(),
-                mavenBundle("org.apache.shiro", "shiro-core", "1.3.2").start(),
-                mavenBundle("javax.servlet", "javax.servlet-api", "3.1.0").start(),
-                mavenBundle("javax.validation", "validation-api", "1.1.0.Final").start(),
-                mavenBundle("org.bouncycastle", "bcprov-ext-jdk15on", "1.56").start(),
-                mavenBundle("ddf.security.core", "security-core-api", getDdfVersion()).start(),
-                mavenBundle("ddf.security.expansion",
-                        "security-expansion-api",
-                        getDdfVersion()).start(),
-                mavenBundle("ddf.security.expansion",
-                        "security-expansion-impl",
-                        getDdfVersion()).start(),
-                mavenBundle("ddf.distribution", "branding-api", getDdfVersion()).start(),
-                mavenBundle("ddf.distribution", "ddf-branding-plugin", getDdfVersion()).start(),
-                mavenBundle("ddf.platform", "platform-configuration", getDdfVersion()).start(),
-                mavenBundle("ddf.security.handler",
-                        "security-handler-api",
-                        getDdfVersion()).start(),
+        return composite(startBundle("org.apache.commons", "commons-lang3"),
+                startBundle("commons-lang", "commons-lang"),
+                startBundle("commons-io", "commons-io"),
+                startBundle("commons-collections", "commons-collections"),
+                startBundle("commons-configuration", "commons-configuration"),
 
-                mavenBundle("ddf.mime.core", "mime-core-api", getDdfVersion()).start(),
-                mavenBundle("ddf.mime.core", "mime-core-impl", getDdfVersion()).start(),
-                mavenBundle("ddf.catalog.core",
-                        "catalog-core-camelcomponent",
-                        getDdfVersion()).start(),
+                startBundle("com.google.guava", "guava"),
 
-                mavenBundle("ddf.catalog.core",
-                        "catalog-core-directorymonitor",
-                        getDdfVersion()).start());
+                startBundle("org.apache.shiro", "shiro-core"),
+                startBundle("javax.servlet", "javax.servlet-api"),
+                startBundle("javax.validation", "validation-api"),
+                startBundle("org.bouncycastle", "bcprov-jdk15on"),
+
+                startBundle("ddf.platform.util", "util-uuidgenerator-api"),
+                startBundle("ddf.platform.util", "util-uuidgenerator-impl"),
+                startBundle("ddf.catalog.core", "catalog-core-camelcontext"),
+                startBundle("ddf.platform.api", "platform-api"),
+                startBundle("org.codice.thirdparty", "gt-opengis"),
+                startBundle("ddf.catalog.core", "catalog-core-api"),
+                startBundle("ddf.security.core", "security-core-api"),
+                startBundle("ddf.security.expansion", "security-expansion-api"),
+                startBundle("ddf.security.expansion", "security-expansion-impl"),
+                startBundle("ddf.distribution", "branding-api"),
+                startBundle("ddf.distribution", "ddf-branding-plugin"),
+                startBundle("ddf.platform", "platform-configuration"),
+                startBundle("ddf.security.handler", "security-handler-api"),
+
+                startBundle("ddf.mime.core", "mime-core-api"),
+                startBundle("ddf.mime.core", "mime-core-impl"),
+                startBundle("ddf.catalog.core", "catalog-core-camelcomponent"),
+
+                startBundle("ddf.catalog.core", "catalog-core-directorymonitor"));
     }
 
-    private Option mockBundle(Class tClass) {
-        return streamBundle(bundle().add(tClass)
-                .set(Constants.BUNDLE_SYMBOLICNAME, tClass.getName())
+    private Option startBundle(String artifactId, String groupId) {
+        return mavenBundle(artifactId, groupId).versionAsInProject()
+                .start();
+    }
+
+    private Option mockBundle(Class bundle) {
+        return streamBundle(bundle().add(bundle)
+                .set(Constants.BUNDLE_SYMBOLICNAME, bundle.getName())
                 .set(Constants.EXPORT_PACKAGE, "*")
                 .set(Constants.IMPORT_PACKAGE, "*")
-                .set(Constants.BUNDLE_ACTIVATOR, tClass.getName())
+                .set(Constants.BUNDLE_ACTIVATOR, bundle.getName())
                 .build(withBnd()));
     }
 
@@ -195,8 +194,7 @@ public class DirectoryMonitorTest {
 
     private void createCatalogFramework() {
         catalogFramework = new MockCatalogFramework();
-        Dictionary properties = new Properties();
-        bundleContext.registerService(CatalogFramework.class, catalogFramework, properties);
+        bundleContext.registerService(CatalogFramework.class, catalogFramework, null);
         await().atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
                 .until(() -> bundleContext.getServiceReference(CatalogFramework.class) != null);
     }
@@ -221,20 +219,17 @@ public class DirectoryMonitorTest {
         createTestFile(directoryPath);
 
         await().atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
-                .until(() -> catalogFramework.createRequests.size() == 1);
+                .until(() -> catalogFramework.createStorageRequests.size() > 0);
+
+        ContentItem item = catalogFramework.createStorageRequests.get(0)
+                .getContentItems()
+                .get(0);
+        assertThat(item.getFilename(), allOf(startsWith("test"), endsWith(".txt")));
     }
 
     private void createTestFile(String directoryPath) throws IOException {
         File file = File.createTempFile("test", ".txt", new File(directoryPath));
-        FileWriter writer = new FileWriter(file);
-        writer.append("Hello, World!");
-        writer.flush();
-        writer.close();
-    }
-
-    private String getDdfVersion() {
-        ConfigurationManager cm = new ConfigurationManager();
-        return cm.getProperty("ddf.version");
+        Files.write("Hello, World", file, Charset.forName("UTF-8"));
     }
 }
 

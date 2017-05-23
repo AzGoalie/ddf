@@ -41,7 +41,6 @@ import ddf.catalog.operation.DeleteRequest;
 import ddf.catalog.operation.DeleteResponse;
 import ddf.catalog.operation.QueryRequest;
 import ddf.catalog.operation.QueryResponse;
-import ddf.catalog.operation.Request;
 import ddf.catalog.operation.ResourceRequest;
 import ddf.catalog.operation.ResourceResponse;
 import ddf.catalog.operation.SourceInfoRequest;
@@ -59,7 +58,9 @@ import ddf.catalog.transform.CatalogTransformerException;
 public class MockCatalogFramework implements CatalogFramework, BundleActivator {
     private static final Logger LOG = LoggerFactory.getLogger(MockCatalogFramework.class);
 
-    public List<Request> createRequests = new ArrayList<>();
+    public List<CreateStorageRequest> createStorageRequests = new ArrayList<>();
+
+    public List<CreateRequest> createRequests = new ArrayList<>();
 
     private ServiceRegistration registration;
 
@@ -67,7 +68,7 @@ public class MockCatalogFramework implements CatalogFramework, BundleActivator {
     public CreateResponse create(CreateStorageRequest createRequest)
             throws IngestException, SourceUnavailableException {
         LOG.debug("CREATE REQUEST");
-        createRequests.add(createRequest);
+        createStorageRequests.add(createRequest);
         return null;
     }
 

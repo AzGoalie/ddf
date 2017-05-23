@@ -20,17 +20,17 @@ import java.util.Arrays;
 
 import org.ops4j.pax.exam.Option;
 
-public class KarafStandardFeatures {
-    public enum StandardFeature {
-        WRAP("wrap"), ARIES_BLUEPRINT("aries-blueprint"), SHELL("shell"), SHELL_COMPAT(
-                "shell-compat"), FEATURE("feature"), JAAS("jaas"), SSH("ssh"), MANAGEMENT(
-                "management"), BUNDLE("bundle"), CONFIG("config"), DEPLOYER("deployer"), DIAGNOSTIC(
-                "diagnostic"), INSTANCE("instance"), KAR("kar"), LOG("log"), PACKAGE("package"), SERVICE(
-                "service"), SYSTEM("system"), STANDARD("standard"), MINIMAL("minimal");
+public class KarafSpringFeatures {
+    public enum SpringFeature {
+        SPRING("spring"), SPRING_ASPECTS("spring-aspects"), SPRING_INSTRUMENT("spring-instrument"), SPRING_JDBC(
+                "spring-jdbc"), SPRING_JMS("spring-jms"), SPRING_TEST("spring-test"), SPRING_ORM(
+                "spring-orm"), SPRING_OXM("spring-oxm"), SPRING_TX("spring-tx"), SPRING_WEB(
+                "spring-web"), SPRING_WEB_PORTLET("spring-web-portlet"), SPRING_WEBSOCKET(
+                "spring-websocket");
 
         private String featureName;
 
-        StandardFeature(String featureName) {
+        SpringFeature(String featureName) {
             this.featureName = featureName;
         }
 
@@ -40,13 +40,13 @@ public class KarafStandardFeatures {
         }
     }
 
-    public static Option karafStandardFeatures(StandardFeature... features) {
+    public static Option karafSpringFeatures(SpringFeature... features) {
         String[] featureStrings = Arrays.stream(features)
                 .map(Enum::toString)
                 .toArray(String[]::new);
 
         return features(maven().groupId("org.apache.karaf.features")
-                .artifactId("standard")
+                .artifactId("spring")
                 .versionAsInProject()
                 .classifier("features")
                 .type("xml"), featureStrings);
