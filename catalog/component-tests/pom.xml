@@ -183,6 +183,11 @@
             <artifactId>mime-core-impl</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -208,7 +213,6 @@
                 <configuration>
                     <systemPropertyVariables>
                         <pax.exam.karaf.version>${karaf.version}</pax.exam.karaf.version>
-                        <ddf.version>${project.version}</ddf.version>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

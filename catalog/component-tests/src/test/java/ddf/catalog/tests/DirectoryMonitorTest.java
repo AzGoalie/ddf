@@ -146,6 +146,7 @@ public class DirectoryMonitorTest {
                 startBundle("commons-configuration", "commons-configuration"),
 
                 startBundle("com.google.guava", "guava"),
+                startBundle("org.apache.tika", "tika-core"),
 
                 startBundle("org.apache.shiro", "shiro-core"),
                 startBundle("javax.servlet", "javax.servlet-api"),
@@ -173,8 +174,8 @@ public class DirectoryMonitorTest {
                 startBundle("ddf.catalog.core", "catalog-core-directorymonitor"));
     }
 
-    private Option startBundle(String artifactId, String groupId) {
-        return mavenBundle(artifactId, groupId).versionAsInProject()
+    private Option startBundle(String groupId, String artifactId) {
+        return mavenBundle(groupId, artifactId).versionAsInProject()
                 .start();
     }
 
