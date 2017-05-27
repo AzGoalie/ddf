@@ -62,6 +62,10 @@ public class MockCatalogFramework implements CatalogFramework, BundleActivator {
 
     public List<CreateRequest> createRequests = new ArrayList<>();
 
+    public List<UpdateStorageRequest> updateStorageRequests = new ArrayList<>();
+
+    public List<UpdateRequest> updateRequests = new ArrayList<>();
+
     private ServiceRegistration registration;
 
     @Override
@@ -174,6 +178,7 @@ public class MockCatalogFramework implements CatalogFramework, BundleActivator {
     public UpdateResponse update(UpdateStorageRequest updateRequest)
             throws IngestException, SourceUnavailableException {
         LOG.debug("UPDATE");
+        updateStorageRequests.add(updateRequest);
         return null;
     }
 
@@ -181,6 +186,7 @@ public class MockCatalogFramework implements CatalogFramework, BundleActivator {
     public UpdateResponse update(UpdateRequest updateRequest)
             throws IngestException, SourceUnavailableException {
         LOG.debug("UPDATE");
+        updateRequests.add(updateRequest);
         return null;
     }
 
@@ -224,5 +230,10 @@ public class MockCatalogFramework implements CatalogFramework, BundleActivator {
     @Override
     public void stop(BundleContext context) throws Exception {
         registration.unregister();
+    }
+
+    public void reset() {
+        createStorageRequests.clear();
+        createRequests.clear();
     }
 }

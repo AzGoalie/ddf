@@ -14,15 +14,12 @@
 package ddf.catalog.tests;
 
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.CoreOptions.propagateSystemProperty;
 import static org.ops4j.pax.exam.CoreOptions.streamBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 import static org.ops4j.pax.tinybundles.core.TinyBundles.bundle;
@@ -46,6 +43,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -53,8 +53,12 @@ import javax.inject.Inject;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.karaf.features.BootFinished;
+import org.codice.ddf.catalog.content.monitor.ContentDirectoryMonitor;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -79,9 +83,6 @@ import ddf.catalog.tests.mocks.MockSecurityManager;
 public class DirectoryMonitorTest {
     private static final Logger LOG = LoggerFactory.getLogger(DirectoryMonitorTest.class);
 
-    private static final String MONITORED_DIRECTORY_PROPERTY =
-            "ddf.catalog.tests.monitoredDirectory";
-
     private static final int TIMEOUT_IN_SECONDS = 10;
 
     @Inject
@@ -93,7 +94,15 @@ public class DirectoryMonitorTest {
     @Inject
     private CamelContext camelContext;
 
-    private MockCatalogFramework catalogFramework;
+    @Inject
+    private ContentDirectoryMonitor contentDirectoryMonitor;
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    private String directoryPath;
+
+    private static MockCatalogFramework catalogFramework;
 
     @Configuration
     public Option[] config() throws IOException {
@@ -112,7 +121,7 @@ public class DirectoryMonitorTest {
                 keystoreAndTruststoreConfig(),
                 mockBundle(MockSecurityManager.class),
                 contentDirectoryMonitorDependencies(),
-                createContentDirectoryMonitorConfig());
+                initlContentDirectoryMonitorConfig());
     }
 
     private Option testDependencies() {
@@ -128,14 +137,11 @@ public class DirectoryMonitorTest {
         return KeystoreTruststoreConfigurator.createKeystoreAndTruststore(keystore, truststore);
     }
 
-    private Option createContentDirectoryMonitorConfig() throws IOException {
-        File monitoredDirectory = Files.createTempDir();
-        System.setProperty(MONITORED_DIRECTORY_PROPERTY, monitoredDirectory.getCanonicalPath());
-        return composite(propagateSystemProperty(MONITORED_DIRECTORY_PROPERTY),
-                editConfigurationFilePut(
-                        "etc/org.codice.ddf.catalog.content.monitor.ContentDirectoryMonitor-test.cfg",
-                        "monitoredDirectoryPath",
-                        monitoredDirectory.getCanonicalPath()));
+    private Option initlContentDirectoryMonitorConfig() throws IOException {
+        return editConfigurationFilePut(
+                "etc/org.codice.ddf.catalog.content.monitor.ContentDirectoryMonitor-test.cfg",
+                "monitoredDirectoryPath",
+                "");
     }
 
     private Option contentDirectoryMonitorDependencies() {
@@ -189,22 +195,26 @@ public class DirectoryMonitorTest {
     }
 
     @Before
-    public void setup() {
+    public void setup() throws IOException {
+        directoryPath = temporaryFolder.getRoot()
+                .getCanonicalPath();
+        LOG.error("Directory being monitored: " + directoryPath);
+
         createCatalogFramework();
     }
 
-    private void createCatalogFramework() {
-        catalogFramework = new MockCatalogFramework();
-        bundleContext.registerService(CatalogFramework.class, catalogFramework, null);
-        await().atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
-                .until(() -> bundleContext.getServiceReference(CatalogFramework.class) != null);
+    @After
+    public void teardown() {
+        catalogFramework.reset();
     }
 
-    @Test
-    public void testBundleContext() {
-        LOG.error("HELLOOOOOOO WORLD!!!!!!!");
-        LOG.error("Bundle Context: " + bundleContext);
-        LOG.error("BootFinished: " + bootFinished);
+    private void createCatalogFramework() {
+        if (catalogFramework == null) {
+            catalogFramework = new MockCatalogFramework();
+            bundleContext.registerService(CatalogFramework.class, catalogFramework, null);
+            await().atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+                    .until(() -> bundleContext.getServiceReference(CatalogFramework.class) != null);
+        }
     }
 
     @Test
@@ -214,23 +224,71 @@ public class DirectoryMonitorTest {
     }
 
     @Test
-    public void testDirectoryMonitor() throws IOException, InterruptedException {
-        String directoryPath = System.getProperty(MONITORED_DIRECTORY_PROPERTY);
-        LOG.error("Directory being monitored: " + directoryPath);
-        createTestFile(directoryPath);
+    public void testInPlaceMonitoring() throws IOException, InterruptedException {
+        updateContentDirectoryMonitor(directoryPath, ContentDirectoryMonitor.IN_PLACE);
 
+        File file = createTestFile(directoryPath);
+        assertStorageRequest(file.getName());
+        assertThat(file.exists(), is(true));
+    }
+
+    @Test
+    public void testMoveMonitoring() throws IOException {
+        updateContentDirectoryMonitor(directoryPath, ContentDirectoryMonitor.MOVE);
+        File file = createTestFile(directoryPath);
+
+        assertStorageRequest(file.getName());
+
+        File movedFile = Paths.get(directoryPath, ".ingested", file.getName())
+                .toFile();
+        assertThat(file.exists(), is(false));
+        assertThat(movedFile.exists(), is(true));
+    }
+
+    @Test
+    public void testDeleteMonitoring() throws IOException {
+        updateContentDirectoryMonitor(directoryPath, ContentDirectoryMonitor.DELETE);
+
+        File file = createTestFile(directoryPath);
+        File directory = Paths.get(directoryPath)
+                .toFile();
+
+        assertStorageRequest(file.getName());
+        assertThat(file.exists(), is(false));
+        assertThat(directory.list().length, is(0));
+    }
+
+    private File createTestFile(String directoryPath) throws IOException {
+        File file = File.createTempFile("test", ".txt", new File(directoryPath));
+        Files.write("Hello, World", file, Charset.forName("UTF-8"));
+        return file;
+    }
+
+    private void updateContentDirectoryMonitor(String directoryPath, String processingMechanism) {
+        updateContentDirectoryMonitor(directoryPath, 1, 500, processingMechanism);
+    }
+
+    private void updateContentDirectoryMonitor(String directoryPath, int numThreads,
+            int readLockInterval, String processingMechanism) {
+        Map<String, Object> properties = new HashMap<>();
+
+        properties.put("monitoredDirectoryPath", directoryPath);
+        properties.put("numThreads", numThreads);
+        properties.put("readLockIntervalMilliseconds", readLockInterval);
+        properties.put("processingMechanism", processingMechanism);
+
+        contentDirectoryMonitor.updateCallback(properties);
+    }
+
+    private void assertStorageRequest(String filename) {
         await().atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
                 .until(() -> catalogFramework.createStorageRequests.size() > 0);
 
         ContentItem item = catalogFramework.createStorageRequests.get(0)
                 .getContentItems()
                 .get(0);
-        assertThat(item.getFilename(), allOf(startsWith("test"), endsWith(".txt")));
-    }
+        assertThat(item.getFilename(), is(filename));
 
-    private void createTestFile(String directoryPath) throws IOException {
-        File file = File.createTempFile("test", ".txt", new File(directoryPath));
-        Files.write("Hello, World", file, Charset.forName("UTF-8"));
     }
 }
 
