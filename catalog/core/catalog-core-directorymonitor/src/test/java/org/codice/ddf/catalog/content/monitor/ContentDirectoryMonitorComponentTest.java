@@ -31,22 +31,26 @@ import static org.codice.ddf.catalog.content.monitor.features.KarafStandardFeatu
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.CoreOptions.streamBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-import static org.ops4j.pax.tinybundles.core.TinyBundles.bundle;
-import static org.ops4j.pax.tinybundles.core.TinyBundles.withBnd;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
@@ -54,21 +58,21 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.karaf.features.BootFinished;
 import org.codice.ddf.catalog.content.monitor.configurators.KeystoreTruststoreConfigurator;
-import org.codice.ddf.catalog.content.monitor.mocks.MockCatalogFramework;
-import org.codice.ddf.catalog.content.monitor.mocks.MockSecurityManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.stubbing.Answer;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +80,11 @@ import com.google.common.io.Files;
 
 import ddf.catalog.CatalogFramework;
 import ddf.catalog.content.data.ContentItem;
+import ddf.catalog.content.operation.CreateStorageRequest;
+import ddf.catalog.operation.CreateResponse;
+import ddf.catalog.source.IngestException;
+import ddf.catalog.source.SourceUnavailableException;
+import ddf.security.service.SecurityManager;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
@@ -87,6 +96,8 @@ public class ContentDirectoryMonitorComponentTest {
 
     @Inject
     private BundleContext bundleContext;
+
+    private List<ServiceRegistration> serviceRegistrations = new ArrayList<>();
 
     @Inject
     private BootFinished bootFinished;
@@ -102,7 +113,7 @@ public class ContentDirectoryMonitorComponentTest {
 
     private String directoryPath;
 
-    private static MockCatalogFramework catalogFramework;
+    private CatalogFramework catalogFramework;
 
     @Configuration
     public Option[] config() throws IOException {
@@ -119,13 +130,14 @@ public class ContentDirectoryMonitorComponentTest {
                         CXF_FRONTEND_JAVASCRIPT,
                         CXF_JAXRS),
                 keystoreAndTruststoreConfig(),
-                mockBundle(MockSecurityManager.class),
                 contentDirectoryMonitorDependencies(),
                 initlContentDirectoryMonitorConfig());
     }
 
     private Option testDependencies() {
-        return startBundle("org.awaitility", "awaitility");
+        return composite(startBundle("org.awaitility", "awaitility"),
+                startBundle("org.mockito", "mockito-core"),
+                startBundle("org.objenesis", "objenesis"));
     }
 
     private Option keystoreAndTruststoreConfig() {
@@ -185,36 +197,32 @@ public class ContentDirectoryMonitorComponentTest {
                 .start();
     }
 
-    private Option mockBundle(Class bundle) {
-        return streamBundle(bundle().add(bundle)
-                .set(Constants.BUNDLE_SYMBOLICNAME, bundle.getName())
-                .set(Constants.EXPORT_PACKAGE, "*")
-                .set(Constants.IMPORT_PACKAGE, "*")
-                .set(Constants.BUNDLE_ACTIVATOR, bundle.getName())
-                .build(withBnd()));
-    }
-
     @Before
     public void setup() throws IOException {
         directoryPath = temporaryFolder.getRoot()
                 .getCanonicalPath();
-        LOG.error("Directory being monitored: " + directoryPath);
 
-        createCatalogFramework();
+        SecurityManager securityManager = mock(SecurityManager.class);
+        registerService(securityManager, SecurityManager.class);
+
+        catalogFramework = mock(CatalogFramework.class);
+        registerService(catalogFramework, CatalogFramework.class);
     }
 
     @After
     public void teardown() {
-        catalogFramework.reset();
+        for (ServiceRegistration registration : serviceRegistrations) {
+            registration.unregister();
+        }
     }
 
-    private void createCatalogFramework() {
-        if (catalogFramework == null) {
-            catalogFramework = new MockCatalogFramework();
-            bundleContext.registerService(CatalogFramework.class, catalogFramework, null);
-            await().atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
-                    .until(() -> bundleContext.getServiceReference(CatalogFramework.class) != null);
-        }
+    private <T> void registerService(T service, Class<T> registerClass) {
+        ServiceRegistration<T> registration = bundleContext.registerService(registerClass,
+                service,
+                null);
+        serviceRegistrations.add(registration);
+        await("service registration").atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+                .until(() -> bundleContext.getServiceReference(registerClass) != null);
     }
 
     @Test
@@ -224,21 +232,28 @@ public class ContentDirectoryMonitorComponentTest {
     }
 
     @Test
-    public void testInPlaceMonitoring() throws IOException, InterruptedException {
+    public void testInPlaceMonitoring()
+            throws IOException, InterruptedException, SourceUnavailableException, IngestException {
         updateContentDirectoryMonitor(directoryPath, ContentDirectoryMonitor.IN_PLACE);
 
         File file = createTestFile(directoryPath);
-        assertStorageRequest(file.getName());
+
+        ArgumentCaptor<CreateStorageRequest> createStorageRequest = ArgumentCaptor.forClass(
+                CreateStorageRequest.class);
+        verify(catalogFramework).create(createStorageRequest.capture());
+        ContentItem result = createStorageRequest.getValue()
+                .getContentItems()
+                .get(0);
+
+        assertThat(result.getFilename(), is(file.getName()));
         assertThat(file.exists(), is(true));
     }
 
     @Test
-    public void testMoveMonitoring() throws IOException {
+    public void testMoveMonitoring()
+            throws IOException, SourceUnavailableException, IngestException {
         updateContentDirectoryMonitor(directoryPath, ContentDirectoryMonitor.MOVE);
         File file = createTestFile(directoryPath);
-
-        assertStorageRequest(file.getName());
-
         File movedFile = Paths.get(directoryPath, ".ingested", file.getName())
                 .toFile();
         assertThat(file.exists(), is(false));
@@ -246,21 +261,40 @@ public class ContentDirectoryMonitorComponentTest {
     }
 
     @Test
-    public void testDeleteMonitoring() throws IOException {
+    public void testDeleteMonitoring()
+            throws IOException, SourceUnavailableException, IngestException {
         updateContentDirectoryMonitor(directoryPath, ContentDirectoryMonitor.DELETE);
 
         File file = createTestFile(directoryPath);
         File directory = Paths.get(directoryPath)
                 .toFile();
 
-        assertStorageRequest(file.getName());
-        assertThat(file.exists(), is(false));
+        await("file deleted").atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+                .until(() -> !file.exists());
+
         assertThat(directory.list().length, is(0));
     }
 
-    private File createTestFile(String directoryPath) throws IOException {
+    private AtomicBoolean createStorageRequestNotification()
+            throws SourceUnavailableException, IngestException {
+        AtomicBoolean created = new AtomicBoolean(false);
+        Answer<CreateResponse> response = invocation -> {
+            created.set(true);
+            return null;
+        };
+        when(catalogFramework.create(any(CreateStorageRequest.class))).thenAnswer(response);
+        return created;
+    }
+
+    private File createTestFile(String directoryPath)
+            throws IOException, SourceUnavailableException, IngestException {
+        AtomicBoolean created = createStorageRequestNotification();
+
         File file = File.createTempFile("test", ".txt", new File(directoryPath));
         Files.write("Hello, World", file, Charset.forName("UTF-8"));
+
+        await("create storage request created").atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+                .until(created::get);
         return file;
     }
 
@@ -278,17 +312,6 @@ public class ContentDirectoryMonitorComponentTest {
         properties.put("processingMechanism", processingMechanism);
 
         contentDirectoryMonitor.updateCallback(properties);
-    }
-
-    private void assertStorageRequest(String filename) {
-        await().atMost(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
-                .until(() -> catalogFramework.createStorageRequests.size() > 0);
-
-        ContentItem item = catalogFramework.createStorageRequests.get(0)
-                .getContentItems()
-                .get(0);
-        assertThat(item.getFilename(), is(filename));
-
     }
 }
 
