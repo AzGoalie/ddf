@@ -11,20 +11,15 @@
  * is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package ddf.catalog.tests.mocks;
+package org.codice.ddf.catalog.content.monitor.mocks;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +50,7 @@ import ddf.catalog.source.SourceUnavailableException;
 import ddf.catalog.source.UnsupportedQueryException;
 import ddf.catalog.transform.CatalogTransformerException;
 
-public class MockCatalogFramework implements CatalogFramework, BundleActivator {
+public class MockCatalogFramework implements CatalogFramework {
     private static final Logger LOG = LoggerFactory.getLogger(MockCatalogFramework.class);
 
     public List<CreateStorageRequest> createStorageRequests = new ArrayList<>();
@@ -65,8 +60,6 @@ public class MockCatalogFramework implements CatalogFramework, BundleActivator {
     public List<UpdateStorageRequest> updateStorageRequests = new ArrayList<>();
 
     public List<UpdateRequest> updateRequests = new ArrayList<>();
-
-    private ServiceRegistration registration;
 
     @Override
     public CreateResponse create(CreateStorageRequest createRequest)
@@ -218,18 +211,6 @@ public class MockCatalogFramework implements CatalogFramework, BundleActivator {
     public String getOrganization() {
         LOG.debug("GET ORGANIZATION");
         return null;
-    }
-
-    @Override
-    public void start(BundleContext context) throws Exception {
-        Dictionary properties = new Properties();
-        properties.put("name", "Mock Catalog Framework");
-        registration = context.registerService(CatalogFramework.class, this, properties);
-    }
-
-    @Override
-    public void stop(BundleContext context) throws Exception {
-        registration.unregister();
     }
 
     public void reset() {

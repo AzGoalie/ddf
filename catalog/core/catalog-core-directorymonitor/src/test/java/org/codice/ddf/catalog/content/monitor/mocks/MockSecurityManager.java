@@ -11,7 +11,7 @@
  * is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package ddf.catalog.tests.mocks;
+package org.codice.ddf.catalog.content.monitor.mocks;
 
 import java.util.Dictionary;
 import java.util.Properties;

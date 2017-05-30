@@ -11,9 +11,23 @@
  * is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package ddf.catalog.tests;
+package org.codice.ddf.catalog.content.monitor;
 
 import static org.awaitility.Awaitility.await;
+import static org.codice.ddf.catalog.content.monitor.configurators.KarafConfigurator.karafConfiguration;
+import static org.codice.ddf.catalog.content.monitor.features.CamelFeatures.CamelFeature.CAMEL;
+import static org.codice.ddf.catalog.content.monitor.features.CamelFeatures.camelFeatures;
+import static org.codice.ddf.catalog.content.monitor.features.CxfFeatures.CxfFeature.CXF_BINDINGS_SOAP;
+import static org.codice.ddf.catalog.content.monitor.features.CxfFeatures.CxfFeature.CXF_FRONTEND_JAVASCRIPT;
+import static org.codice.ddf.catalog.content.monitor.features.CxfFeatures.CxfFeature.CXF_JAXRS;
+import static org.codice.ddf.catalog.content.monitor.features.CxfFeatures.CxfFeature.CXF_RT_SECURITY_SAML;
+import static org.codice.ddf.catalog.content.monitor.features.CxfFeatures.CxfFeature.CXF_WS_POLICY;
+import static org.codice.ddf.catalog.content.monitor.features.CxfFeatures.CxfFeature.CXF_WS_SECURITY;
+import static org.codice.ddf.catalog.content.monitor.features.CxfFeatures.cxfFeatures;
+import static org.codice.ddf.catalog.content.monitor.features.KarafSpringFeatures.SpringFeature.SPRING;
+import static org.codice.ddf.catalog.content.monitor.features.KarafSpringFeatures.karafSpringFeatures;
+import static org.codice.ddf.catalog.content.monitor.features.KarafStandardFeatures.StandardFeature.STANDARD;
+import static org.codice.ddf.catalog.content.monitor.features.KarafStandardFeatures.karafStandardFeatures;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,20 +38,6 @@ import static org.ops4j.pax.exam.CoreOptions.streamBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 import static org.ops4j.pax.tinybundles.core.TinyBundles.bundle;
 import static org.ops4j.pax.tinybundles.core.TinyBundles.withBnd;
-import static ddf.catalog.tests.configurators.KarafConfigurator.karafConfiguration;
-import static ddf.catalog.tests.features.CamelFeatures.CamelFeature.CAMEL;
-import static ddf.catalog.tests.features.CamelFeatures.camelFeatures;
-import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_BINDINGS_SOAP;
-import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_FRONTEND_JAVASCRIPT;
-import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_JAXRS;
-import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_RT_SECURITY_SAML;
-import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_WS_POLICY;
-import static ddf.catalog.tests.features.CxfFeatures.CxfFeature.CXF_WS_SECURITY;
-import static ddf.catalog.tests.features.CxfFeatures.cxfFeatures;
-import static ddf.catalog.tests.features.KarafSpringFeatures.SpringFeature.SPRING;
-import static ddf.catalog.tests.features.KarafSpringFeatures.karafSpringFeatures;
-import static ddf.catalog.tests.features.KarafStandardFeatures.StandardFeature.STANDARD;
-import static ddf.catalog.tests.features.KarafStandardFeatures.karafStandardFeatures;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +53,9 @@ import javax.inject.Inject;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.karaf.features.BootFinished;
-import org.codice.ddf.catalog.content.monitor.ContentDirectoryMonitor;
+import org.codice.ddf.catalog.content.monitor.configurators.KeystoreTruststoreConfigurator;
+import org.codice.ddf.catalog.content.monitor.mocks.MockCatalogFramework;
+import org.codice.ddf.catalog.content.monitor.mocks.MockSecurityManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -74,14 +76,12 @@ import com.google.common.io.Files;
 
 import ddf.catalog.CatalogFramework;
 import ddf.catalog.content.data.ContentItem;
-import ddf.catalog.tests.configurators.KeystoreTruststoreConfigurator;
-import ddf.catalog.tests.mocks.MockCatalogFramework;
-import ddf.catalog.tests.mocks.MockSecurityManager;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
-public class DirectoryMonitorTest {
-    private static final Logger LOG = LoggerFactory.getLogger(DirectoryMonitorTest.class);
+public class ContentDirectoryMonitorComponentTest {
+    private static final Logger LOG =
+            LoggerFactory.getLogger(ContentDirectoryMonitorComponentTest.class);
 
     private static final int TIMEOUT_IN_SECONDS = 10;
 
@@ -129,9 +129,9 @@ public class DirectoryMonitorTest {
     }
 
     private Option keystoreAndTruststoreConfig() {
-        InputStream keystore =
-                DirectoryMonitorTest.class.getResourceAsStream("/serverKeystore.jks");
-        InputStream truststore = DirectoryMonitorTest.class.getResourceAsStream(
+        InputStream keystore = ContentDirectoryMonitorComponentTest.class.getResourceAsStream(
+                "/serverKeystore.jks");
+        InputStream truststore = ContentDirectoryMonitorComponentTest.class.getResourceAsStream(
                 "/serverTruststore.jks");
 
         return KeystoreTruststoreConfigurator.createKeystoreAndTruststore(keystore, truststore);
