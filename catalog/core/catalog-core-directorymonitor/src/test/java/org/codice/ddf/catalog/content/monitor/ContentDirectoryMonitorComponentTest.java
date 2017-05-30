@@ -131,7 +131,7 @@ public class ContentDirectoryMonitorComponentTest {
                         CXF_JAXRS),
                 keystoreAndTruststoreConfig(),
                 contentDirectoryMonitorDependencies(),
-                initlContentDirectoryMonitorConfig());
+                initContentDirectoryMonitorConfig());
     }
 
     private Option testDependencies() {
@@ -149,7 +149,7 @@ public class ContentDirectoryMonitorComponentTest {
         return KeystoreTruststoreConfigurator.createKeystoreAndTruststore(keystore, truststore);
     }
 
-    private Option initlContentDirectoryMonitorConfig() throws IOException {
+    private Option initContentDirectoryMonitorConfig() throws IOException {
         return editConfigurationFilePut(
                 "etc/org.codice.ddf.catalog.content.monitor.ContentDirectoryMonitor-test.cfg",
                 "monitoredDirectoryPath",
