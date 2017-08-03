@@ -27,8 +27,8 @@ import org.codice.ddf.libs.geo.GeoFormatException;
 import org.codice.ddf.libs.geo.util.GeospatialUtil;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.GmdConstants;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.converter.DefaultCswRecordMap;
 import org.codice.ddf.spatial.ogc.csw.catalog.converter.CswRecordConverter;
+import org.codice.ddf.spatial.ogc.csw.catalog.query.CswQueryMap;
 import org.geotools.filter.LiteralExpressionImpl;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
 import org.geotools.styling.UomOgcMapping;
@@ -65,7 +65,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.temporal.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.helpers.NamespaceSupport;
 
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -97,9 +96,12 @@ public class CswRecordMapperFilterVisitor extends DuplicatingFilterVisitor {
 
     private Filter visitedFilter;
 
-    public CswRecordMapperFilterVisitor(MetacardType metacardType,
-            List<MetacardType> metacardTypes) {
+    private CswQueryMap parameterMap;
+
+    public CswRecordMapperFilterVisitor(MetacardType metacardType, List<MetacardType> metacardTypes,
+            CswQueryMap parameterMap) {
         this.metacardType = metacardType;
+        this.parameterMap = parameterMap;
         attributeTypes = new HashMap<>();
         for (MetacardType type : metacardTypes) {
             for (AttributeDescriptor ad : type.getAttributeDescriptors()) {
@@ -254,10 +256,7 @@ public class CswRecordMapperFilterVisitor extends DuplicatingFilterVisitor {
                 propertyName) || GmdConstants.APISO_BOUNDING_BOX.equals(propertyName)) {
             name = Metacard.ANY_GEO;
         } else {
-            NamespaceSupport namespaceSupport = expression.getNamespaceContext();
-
-            name = DefaultCswRecordMap.getDefaultCswRecordMap()
-                    .getDefaultMetacardFieldForPrefixedString(propertyName, namespaceSupport);
+            name = parameterMap.getMetacardField(propertyName);
 
             if (SPATIAL_QUERY_TAG.equals(extraData)) {
                 AttributeDescriptor attrDesc = metacardType.getAttributeDescriptor(name);

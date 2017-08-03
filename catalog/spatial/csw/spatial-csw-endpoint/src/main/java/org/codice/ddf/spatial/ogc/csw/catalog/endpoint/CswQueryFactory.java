@@ -18,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import org.codice.ddf.spatial.ogc.csw.catalog.common.CswException;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.PropertyIsFuzzyFunction;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.converter.DefaultCswRecordMap;
 import org.codice.ddf.spatial.ogc.csw.catalog.endpoint.mappings.CswRecordMapperFilterVisitor;
+import org.codice.ddf.spatial.ogc.csw.catalog.query.CswQueryMap;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.AttributeExpressionImpl;
 import org.geotools.filter.FilterFactoryImpl;
@@ -82,6 +84,8 @@ public class CswQueryFactory {
     private static final Configuration PARSER_CONFIG =
             new org.geotools.filter.v1_1.OGCConfiguration();
 
+    private static final String METACARD_NAMESPACE = "urn:catalog:metacard";
+
     private static JAXBContext jaxBContext;
 
     private final FilterBuilder builder;
@@ -95,6 +99,8 @@ public class CswQueryFactory {
     private List<MetacardType> metacardTypes;
 
     private AttributeRegistry attributeRegistry;
+
+    private List<CswQueryMap> queryMaps;
 
     public CswQueryFactory(FilterBuilder filterBuilder, FilterAdapter adapter,
             MetacardType metacardType, List<MetacardType> metacardTypes) {
@@ -131,7 +137,9 @@ public class CswQueryFactory {
         QueryType query = (QueryType) request.getAbstractQuery()
                 .getValue();
 
-        CswRecordMapperFilterVisitor filterVisitor = buildFilter(query.getConstraint());
+        CswQueryMap parameterMap = selectCswMap(request.getOutputSchema());
+        CswRecordMapperFilterVisitor filterVisitor = buildFilter(query.getConstraint(),
+                parameterMap);
         QueryImpl frameworkQuery = new QueryImpl(filterVisitor.getVisitedFilter());
         frameworkQuery.setSortBy(buildSort(query.getSortBy()));
 
@@ -161,18 +169,21 @@ public class CswQueryFactory {
         return queryRequest;
     }
 
-    public QueryRequest getQuery(QueryConstraintType constraint) throws CswException {
-        Filter filter = buildFilter(constraint).getVisitedFilter();
+    public QueryRequest getQuery(QueryConstraintType constraint, Collection<String> namespaceUris)
+            throws CswException {
+        CswQueryMap queryMap = selectCswMap(namespaceUris);
+        Filter filter = buildFilter(constraint, queryMap).getVisitedFilter();
         QueryImpl query = new QueryImpl(filter);
         query.setPageSize(-1);
 
         return new QueryRequestImpl(query);
     }
 
-    private CswRecordMapperFilterVisitor buildFilter(QueryConstraintType constraint)
-            throws CswException {
+    private CswRecordMapperFilterVisitor buildFilter(QueryConstraintType constraint,
+            CswQueryMap queryMap) throws CswException {
         CswRecordMapperFilterVisitor visitor = new CswRecordMapperFilterVisitor(metacardType,
-                metacardTypes);
+                metacardTypes,
+                queryMap);
         Filter filter = null;
         if (constraint != null) {
             if (constraint.isSetCqlText()) {
@@ -255,7 +266,6 @@ public class CswQueryFactory {
             return null;
         }
 
-
         if (!attributeRegistry.lookup(sortBy.getPropertyName()
                 .getPropertyName())
                 .isPresent()
@@ -325,6 +335,36 @@ public class CswQueryFactory {
         return (Filter) parseJaxB(filterElement);
     }
 
+    private CswQueryMap selectCswMap(String schema) {
+        CswQueryMap defaultMap = null;
+        for (CswQueryMap map : queryMaps) {
+            if (schema.equals(map.getSchema())) {
+                return map;
+            } else if (METACARD_NAMESPACE.equals(map.getSchema())) {
+                defaultMap = map;
+            }
+        }
+
+        if (defaultMap == null) {
+            throw new IllegalStateException("Default metacard query map is missing");
+        }
+
+        return defaultMap;
+    }
+
+    private CswQueryMap selectCswMap(Collection<String> namespaceUris) {
+        CswQueryMap defaultMap = selectCswMap(METACARD_NAMESPACE);
+
+        for (String namespace : namespaceUris) {
+            CswQueryMap tmp = selectCswMap(namespace);
+            if (!tmp.equals(defaultMap)) {
+                return tmp;
+            }
+        }
+
+        return defaultMap;
+    }
+
     public QueryRequest updateQueryRequestTags(QueryRequest queryRequest, String schema)
             throws UnsupportedQueryException {
         QueryRequest newRequest = queryRequest;
@@ -365,5 +405,9 @@ public class CswQueryFactory {
 
     public void setAttributeRegistry(AttributeRegistry attributeRegistry) {
         this.attributeRegistry = attributeRegistry;
+    }
+
+    public void setQueryMaps(List<CswQueryMap> queryMaps) {
+        this.queryMaps = queryMaps;
     }
 }

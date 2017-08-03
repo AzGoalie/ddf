@@ -168,6 +168,7 @@
                             ref="metacardTypes"/>
     </reference-list>
 
+    <reference-list id="cswQueryMap" interface="org.codice.ddf.spatial.ogc.csw.catalog.query.CswQueryMap"/>
     <bean id="cswFilterFactory"
           class="org.codice.ddf.spatial.ogc.csw.catalog.endpoint.CswQueryFactory">
         <argument ref="filterBuilder"/>
@@ -180,6 +181,7 @@
                 <value type="java.lang.String">urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0=registry,registry-remote</value>
             </array>
         </property>
+        <property name="queryMaps" ref="cswQueryMap"/>
     </bean>
 
     <bean id="CswSubscriptionSvc"

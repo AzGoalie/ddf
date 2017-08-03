@@ -30,5 +30,6 @@
         <module>spatial-csw-connectedsource</module>
         <module>spatial-csw-endpoint</module>
         <module>spatial-csw-source-common</module>
+        <module>spatial-csw-query-mapping</module>
     </modules>
 </project>

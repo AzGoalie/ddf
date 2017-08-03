@@ -39,6 +39,8 @@ import org.apache.commons.lang.StringUtils;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswException;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.GetRecordsRequest;
+import org.codice.ddf.spatial.ogc.csw.catalog.query.CswQueryMap;
+import org.codice.ddf.spatial.ogc.csw.catalog.query.impl.MetacardCswQueryMap;
 import org.geotools.filter.AttributeExpressionImpl;
 import org.geotools.filter.LiteralExpressionImpl;
 import org.geotools.styling.UomOgcMapping;
@@ -201,6 +203,9 @@ public class CswQueryFactoryTest {
 
     private static final String CQL_DURING_OR_AFTER = "during OR after";
 
+    private static final List<CswQueryMap> CSW_QUERY_MAP =
+            Collections.singletonList(new MetacardCswQueryMap());
+
     private static CswQueryFactory queryFactory;
 
     private static FilterBuilder filterBuilder = mock(FilterBuilder.class);
@@ -244,6 +249,8 @@ public class CswQueryFactoryTest {
                 filterAdapter,
                 getCswMetacardType(),
                 metacardTypeList);
+
+        queryFactory.setQueryMaps(CSW_QUERY_MAP);
 
         AttributeRegistry mockAttributeRegistry = mock(AttributeRegistry.class);
         when(mockAttributeRegistry.lookup(TITLE_TEST_ATTRIBUTE)).thenReturn(Optional.of(mock(
