@@ -104,9 +104,8 @@
             <artifactId>woodstox-core-asl</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-epsg-hsql</artifactId>
-            <version>${org.geotools.version}</version>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>geotools-suite</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

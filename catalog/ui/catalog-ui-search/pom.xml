@@ -113,20 +113,8 @@
             <version>${spark.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-opengis</artifactId>
-            <version>14.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-cql</artifactId>
-            <version>14.4</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>jai_core</artifactId>
-                    <groupId>javax.media</groupId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>geotools-suite</artifactId>
         </dependency>
         <dependency>
             <groupId>ddf.catalog.transformer</groupId>
@@ -189,11 +177,6 @@
             <groupId>ddf.platform.util</groupId>
             <artifactId>platform-util-unavailableurls</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-main</artifactId>
-            <version>14.4</version>
         </dependency>
         <dependency>
             <groupId>ddf.catalog.core</groupId>

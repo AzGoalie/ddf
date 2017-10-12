@@ -83,8 +83,8 @@
             <artifactId>xercesImpl</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.geotools.xsd</groupId>
-            <artifactId>gt-xsd-gml3</artifactId>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>geotools-suite</artifactId>
         </dependency>
     </dependencies>
     <build>

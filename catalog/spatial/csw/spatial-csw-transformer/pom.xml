@@ -101,9 +101,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-cql</artifactId>
-            <version>13.0</version>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>geotools-suite</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

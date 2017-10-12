@@ -31,9 +31,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-opengis</artifactId>
-            <version>8.4</version>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>geotools-suite</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
@@ -46,11 +45,6 @@
         <dependency>
             <groupId>net.minidev</groupId>
             <artifactId>asm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-jts-wrapper</artifactId>
-            <version>8.4</version>
         </dependency>
         <dependency>
             <groupId>ddf.catalog.core</groupId>

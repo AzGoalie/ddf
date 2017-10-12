@@ -45,9 +45,8 @@
             <version>${jts.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-referencing</artifactId>
-            <version>${org.geotools.version}</version>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>geotools-suite</artifactId>
         </dependency>
         <dependency>
             <groupId>org.la4j</groupId>

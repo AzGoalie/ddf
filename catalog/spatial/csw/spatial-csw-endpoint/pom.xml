@@ -89,12 +89,13 @@
             <artifactId>jaxb2-basics-runtime</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-xml</artifactId>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>geotools-suite</artifactId>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-cql</artifactId>
+            <version>${org.geotools.version}</version>
         </dependency>
         <dependency>
             <groupId>xpp3</groupId>

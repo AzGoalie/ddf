@@ -69,8 +69,8 @@
         </dependency>
         <!-- for SpatialFilter's PrimitiveFactoryImpl class -->
         <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-jts-wrapper</artifactId>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>geotools-suite</artifactId>
         </dependency>
         <dependency>
             <groupId>ddf.platform.util</groupId>

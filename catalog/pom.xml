@@ -282,54 +282,14 @@
                 <version>${tika.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.vividsolutions</groupId>
-                <artifactId>jts</artifactId>
-                <version>1.12</version>
-            </dependency>
-            <dependency>
                 <groupId>xmlunit</groupId>
                 <artifactId>xmlunit</artifactId>
                 <version>1.4</version>
             </dependency>
             <dependency>
-                <groupId>org.geotools</groupId>
-                <artifactId>gt-opengis</artifactId>
-                <version>${org.geotools.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.geotools</groupId>
-                <artifactId>gt-main</artifactId>
-                <version>${org.geotools.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.geotools</groupId>
-                <artifactId>gt-jts-wrapper</artifactId>
-                <version>${org.geotools.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.geotools.xsd</groupId>
-                <artifactId>gt-xsd-gml3</artifactId>
-                <version>${org.geotools.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.geotools</groupId>
-                <artifactId>gt-xml</artifactId>
-                <version>${org.geotools.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.geotools</groupId>
-                <artifactId>gt-shapefile</artifactId>
-                <version>${org.geotools.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.geotools</groupId>
-                <artifactId>gt-epsg-hsql</artifactId>
-                <version>${org.geotools.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.geotools</groupId>
-                <artifactId>gt-cql</artifactId>
-                <version>${org.geotools.version}</version>
+                <groupId>org.codice.thirdparty</groupId>
+                <artifactId>geotools-suite</artifactId>
+                <version>${org.geotools.bundle.version}</version>
             </dependency>
             <dependency>
                 <groupId>xalan</groupId>

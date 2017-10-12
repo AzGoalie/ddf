@@ -103,7 +103,7 @@
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-cql</artifactId>
-            <version>13.0</version>
+            <version>${org.geotools.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>gt-main</artifactId>
@@ -147,10 +147,6 @@
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-opengis</artifactId>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
