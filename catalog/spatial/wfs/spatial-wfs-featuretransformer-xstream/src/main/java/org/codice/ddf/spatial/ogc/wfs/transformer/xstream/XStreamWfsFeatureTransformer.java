@@ -179,7 +179,7 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
   }
 
   public void setMetacardTypeEnhancers(List<MetacardTypeEnhancer> metacardTypeEnhancers) {
-    this.metacardToFeatureMappers = metacardToFeatureMappers;
+    this.metacardTypeEnhancers = metacardTypeEnhancers;
   }
 
   public List<MetacardMapper> getMetacardToFeatureMapper() {

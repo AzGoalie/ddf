@@ -17,7 +17,6 @@ import ddf.catalog.data.Metacard;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.codice.ddf.spatial.ogc.wfs.catalog.message.api.FeatureTransformer;
@@ -26,7 +25,7 @@ public final class WfsTransformerProcessor {
   private List<FeatureTransformer> transformerServiceList;
 
   public WfsTransformerProcessor(List<FeatureTransformer> transformerServiceList) {
-    this.transformerServiceList = Collections.unmodifiableList(transformerServiceList);
+    this.transformerServiceList = transformerServiceList;
     System.out.println("Transformer Size = " + transformerServiceList.size());
   }
 
