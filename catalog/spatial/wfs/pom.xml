@@ -29,6 +29,9 @@
         <module>spatial-wfs-converter</module>
         <module>spatial-wfs-source</module>
         <module>spatial-wfs-mapper</module>
+        <module>spatial-wfs-message</module>
+        <module>spatial-wfs-message-api</module>
+        <module>spatial-wfs-featuretransformer-xstream</module>
         <module>1.0.0</module>
         <module>1.1.0</module>
         <module>2.0.0</module>

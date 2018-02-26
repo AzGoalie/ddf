@@ -30,8 +30,14 @@
     <reference-list id="metacardTypeEnhancerList"
                     interface="org.codice.ddf.spatial.ogc.wfs.catalog.MetacardTypeEnhancer"
                     availability="optional"/>
-    
+
+    <bean id="wfsFeatureTransformer110" class="org.codice.ddf.spatial.ogc.wfs.transformer.xstream.XStreamWfsFeatureTransformer"/>
+
     <reference id="encryptionService" interface="ddf.security.encryption.EncryptionService"/>
+
+    <reference id="wfsMessageBodyReader" interface="javax.ws.rs.ext.MessageBodyReader"/>
+
+    <reference id="wfsObjectFactory" interface="org.codice.ddf.spatial.ogc.wfs.catalog.message.api.WfsObjectFactory"/>
 
     <cm:managed-service-factory
             id="org.codice.ddf.spatial.ogc.wfs.v110.catalog.source.WfsFederatedSource.id"
@@ -57,6 +63,8 @@
             <property name="connectionTimeout" value="30000"/>
             <property name="receiveTimeout" value="60000"/>
             <argument ref="encryptionService"/>
+            <argument ref="wfsMessageBodyReader"/>
+            <argument ref="wfsObjectFactory"/>
             <property name="coordinateOrder" value="LAT_LON"/>
             <property name="metacardTypeEnhancers" ref="metacardTypeEnhancerList"/>
             <property name="srsName" value="EPSG:4326"/>
@@ -65,4 +73,5 @@
         </cm:managed-component>
     </cm:managed-service-factory>
 
+    <service ref="wfsFeatureTransformer110" interface="org.codice.ddf.spatial.ogc.wfs.catalog.message.api.FeatureTransformer"/>
 </blueprint>

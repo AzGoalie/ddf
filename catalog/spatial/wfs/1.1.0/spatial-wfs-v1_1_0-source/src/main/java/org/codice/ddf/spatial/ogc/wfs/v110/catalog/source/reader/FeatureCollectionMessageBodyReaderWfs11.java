@@ -95,11 +95,6 @@ public class FeatureCollectionMessageBodyReaderWfs11
     // created
     String originalInputStream = IOUtils.toString(inStream, StandardCharsets.UTF_8.name());
 
-    // Re-create the input stream (since it has already been read for potential
-    // exception message creation)
-    inStream =
-        new ByteArrayInputStream(originalInputStream.getBytes(StandardCharsets.UTF_8.name()));
-
     WfsFeatureCollection featureCollection = null;
 
     try (InputStream inputStream =

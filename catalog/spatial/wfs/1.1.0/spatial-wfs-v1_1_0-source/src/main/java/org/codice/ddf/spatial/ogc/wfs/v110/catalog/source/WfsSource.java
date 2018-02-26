@@ -13,30 +13,6 @@
  */
 package org.codice.ddf.spatial.ogc.wfs.v110.catalog.source;
 
-import ddf.catalog.Constants;
-import ddf.catalog.data.ContentType;
-import ddf.catalog.data.Metacard;
-import ddf.catalog.data.MetacardType;
-import ddf.catalog.data.Result;
-import ddf.catalog.data.impl.ContentTypeImpl;
-import ddf.catalog.data.impl.ResultImpl;
-import ddf.catalog.filter.FilterAdapter;
-import ddf.catalog.operation.Query;
-import ddf.catalog.operation.QueryRequest;
-import ddf.catalog.operation.ResourceResponse;
-import ddf.catalog.operation.SourceResponse;
-import ddf.catalog.operation.impl.QueryImpl;
-import ddf.catalog.operation.impl.ResourceResponseImpl;
-import ddf.catalog.operation.impl.SourceResponseImpl;
-import ddf.catalog.resource.Resource;
-import ddf.catalog.resource.ResourceNotFoundException;
-import ddf.catalog.resource.ResourceNotSupportedException;
-import ddf.catalog.resource.impl.ResourceImpl;
-import ddf.catalog.source.SourceMonitor;
-import ddf.catalog.source.UnsupportedQueryException;
-import ddf.catalog.transform.CatalogTransformerException;
-import ddf.security.encryption.EncryptionService;
-import ddf.security.service.SecurityServiceException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -61,22 +37,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
 import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.MessageBodyReader;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
-import net.opengis.filter.v_1_1_0.FilterType;
-import net.opengis.filter.v_1_1_0.SpatialOperatorType;
-import net.opengis.wfs.v_1_1_0.FeatureTypeType;
-import net.opengis.wfs.v_1_1_0.GetFeatureType;
-import net.opengis.wfs.v_1_1_0.ObjectFactory;
-import net.opengis.wfs.v_1_1_0.QueryType;
-import net.opengis.wfs.v_1_1_0.WFSCapabilitiesType;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
@@ -95,16 +68,12 @@ import org.codice.ddf.spatial.ogc.wfs.catalog.common.AbstractWfsSource;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.FeatureMetacardType;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.WfsException;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.WfsFeatureCollection;
-import org.codice.ddf.spatial.ogc.wfs.catalog.converter.FeatureConverter;
-import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper;
+import org.codice.ddf.spatial.ogc.wfs.catalog.message.api.WfsObjectFactory;
 import org.codice.ddf.spatial.ogc.wfs.catalog.source.MarkableStreamInterceptor;
 import org.codice.ddf.spatial.ogc.wfs.v110.catalog.common.DescribeFeatureTypeRequest;
 import org.codice.ddf.spatial.ogc.wfs.v110.catalog.common.GetCapabilitiesRequest;
 import org.codice.ddf.spatial.ogc.wfs.v110.catalog.common.Wfs;
 import org.codice.ddf.spatial.ogc.wfs.v110.catalog.common.Wfs11Constants;
-import org.codice.ddf.spatial.ogc.wfs.v110.catalog.converter.FeatureConverterFactoryV110;
-import org.codice.ddf.spatial.ogc.wfs.v110.catalog.converter.impl.GenericFeatureConverterWfs11;
-import org.codice.ddf.spatial.ogc.wfs.v110.catalog.source.reader.FeatureCollectionMessageBodyReaderWfs11;
 import org.codice.ddf.spatial.ogc.wfs.v110.catalog.source.reader.XmlSchemaMessageBodyReaderWfs11;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
@@ -112,6 +81,38 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ddf.catalog.Constants;
+import ddf.catalog.data.ContentType;
+import ddf.catalog.data.Metacard;
+import ddf.catalog.data.MetacardType;
+import ddf.catalog.data.Result;
+import ddf.catalog.data.impl.ContentTypeImpl;
+import ddf.catalog.data.impl.ResultImpl;
+import ddf.catalog.filter.FilterAdapter;
+import ddf.catalog.operation.Query;
+import ddf.catalog.operation.QueryRequest;
+import ddf.catalog.operation.ResourceResponse;
+import ddf.catalog.operation.SourceResponse;
+import ddf.catalog.operation.impl.QueryImpl;
+import ddf.catalog.operation.impl.ResourceResponseImpl;
+import ddf.catalog.operation.impl.SourceResponseImpl;
+import ddf.catalog.resource.Resource;
+import ddf.catalog.resource.ResourceNotFoundException;
+import ddf.catalog.resource.ResourceNotSupportedException;
+import ddf.catalog.resource.impl.ResourceImpl;
+import ddf.catalog.source.SourceMonitor;
+import ddf.catalog.source.UnsupportedQueryException;
+import ddf.catalog.transform.CatalogTransformerException;
+import ddf.security.encryption.EncryptionService;
+import ddf.security.service.SecurityServiceException;
+import net.opengis.filter.v_1_1_0.FilterType;
+import net.opengis.filter.v_1_1_0.SpatialOperatorType;
+import net.opengis.wfs.v_1_1_0.FeatureTypeType;
+import net.opengis.wfs.v_1_1_0.GetFeatureType;
+import net.opengis.wfs.v_1_1_0.ObjectFactory;
+import net.opengis.wfs.v_1_1_0.QueryType;
+import net.opengis.wfs.v_1_1_0.WFSCapabilitiesType;
 
 /** Provides a Federated and Connected source implementation for OGC WFS servers. */
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -172,8 +173,6 @@ public class WfsSource extends AbstractWfsSource {
 
   private final EncryptionService encryptionService;
 
-  private List<MetacardMapper> metacardToFeatureMappers;
-
   private String wfsUrl;
 
   private String wfsVersion;
@@ -195,8 +194,6 @@ public class WfsSource extends AbstractWfsSource {
   private Map<String, ServiceRegistration> metacardTypeServiceRegistrations = new HashMap<>();
 
   private String[] nonQueryableProperties;
-
-  private List<FeatureConverterFactoryV110> featureConverterFactories;
 
   private Integer pollInterval;
 
@@ -222,7 +219,9 @@ public class WfsSource extends AbstractWfsSource {
 
   private String forcedFeatureType;
 
-  private FeatureCollectionMessageBodyReaderWfs11 featureCollectionReader;
+  private MessageBodyReader<WfsFeatureCollection> featureCollectionReader;
+
+  private WfsObjectFactory wfsObjectFactory;
 
   private List<MetacardTypeEnhancer> metacardTypeEnhancers;
 
@@ -247,7 +246,7 @@ public class WfsSource extends AbstractWfsSource {
       AvailabilityTask task,
       SecureCxfClientFactory factory,
       EncryptionService encryptionService,
-      List<MetacardTypeEnhancer> metacardTypeEnhancers)
+      List<MetacardTypeEnhancer> metacardTypeEnhancers, WfsObjectFactory wfsObjectFactory, MessageBodyReader<WfsFeatureCollection> wfsFeatureCollectionMessageBodyReader)
       throws SecurityServiceException {
 
     this.filterAdapter = filterAdapter;
@@ -255,17 +254,30 @@ public class WfsSource extends AbstractWfsSource {
     this.availabilityTask = task;
     this.factory = factory;
     this.encryptionService = encryptionService;
-    this.metacardToFeatureMappers = Collections.emptyList();
     this.metacardTypeEnhancers = metacardTypeEnhancers;
+    this.featureCollectionReader = wfsFeatureCollectionMessageBodyReader;
+    this.wfsObjectFactory = wfsObjectFactory;
+    registerWithObjectFactory();
     initProviders();
     configureWfsFeatures();
   }
 
-  public WfsSource(EncryptionService encryptionService) {
+  public WfsSource(EncryptionService encryptionService, WfsObjectFactory wfsObjectFactory, MessageBodyReader<WfsFeatureCollection> wfsFeatureCollectionMessageBodyReader) {
     scheduler =
         Executors.newSingleThreadScheduledExecutor(
             StandardThreadFactoryBuilder.newThreadFactory("wfsSourceThread"));
     this.encryptionService = encryptionService;
+    this.featureCollectionReader = wfsFeatureCollectionMessageBodyReader;
+    this.wfsObjectFactory = wfsObjectFactory;
+    registerWithObjectFactory();
+  }
+
+  private void registerWithObjectFactory() {
+    wfsObjectFactory.addMessageBodyHandler(WfsFeatureCollection.class, metacards -> {
+      WfsFeatureCollection wfsFeatureCollection = new WfsFeatureCollection();
+      wfsFeatureCollection.setFeatureMembers(metacards);
+      return wfsFeatureCollection;
+    });
   }
 
   /**
@@ -412,8 +424,6 @@ public class WfsSource extends AbstractWfsSource {
     jaxbClassMap.put(GetFeatureType.class.getName(), expandedName);
     provider.setJaxbElementClassMap(jaxbClassMap);
     provider.setMarshallAsJaxbElement(true);
-
-    featureCollectionReader = new FeatureCollectionMessageBodyReaderWfs11();
 
     return Arrays.asList(
         provider,
@@ -571,7 +581,7 @@ public class WfsSource extends AbstractWfsSource {
               createFeatureMetacardTypeRegistration(featureTypeType, ftSimpleName, schema);
           mcTypeRegs.put(ftSimpleName, registration);
           FeatureMetacardType featureMetacardType = registration.getFtMetacard();
-          lookupFeatureConverter(ftSimpleName, featureMetacardType, registration.getSrs());
+          //lookupFeatureConverter(ftSimpleName, featureMetacardType, registration.getSrs());
 
           this.featureTypeFilters.put(
               featureMetacardType.getFeatureType(),
@@ -615,71 +625,7 @@ public class WfsSource extends AbstractWfsSource {
     }
   }
 
-  private void lookupFeatureConverter(
-      String ftSimpleName, FeatureMetacardType ftMetacard, String srs) {
-    FeatureConverter featureConverter = null;
 
-    /**
-     * The list of feature converter factories injected into this class is a live list. So, feature
-     * converter factories can be added and removed from the system while running.
-     */
-    if (org.apache.commons.collections.CollectionUtils.isNotEmpty(featureConverterFactories)) {
-      for (FeatureConverterFactoryV110 featureConverterFactory : featureConverterFactories) {
-        if (ftSimpleName.equalsIgnoreCase(featureConverterFactory.getFeatureType())) {
-          featureConverter = featureConverterFactory.createConverter();
-          break;
-        }
-      }
-    }
-
-    // Found a specific feature converter
-    if (featureConverter != null) {
-      LOGGER.debug(
-          "WFS Source {}: Features of type: {} will be converted using {}",
-          getId(),
-          ftSimpleName,
-          featureConverter.getClass().getSimpleName());
-    } else {
-      LOGGER.debug(
-          "WfsSource {}: Unable to find a feature specific converter; {} will be converted using the GenericFeatureConverter",
-          getId(),
-          ftSimpleName);
-
-      // Since we have no specific converter, we will check to see if we have a mapper to do
-      // feature property to metacard attribute mappings.
-      MetacardMapper featurePropertyToMetacardAttributeMapper =
-          lookupMetacardAttributeToFeaturePropertyMapper(ftMetacard.getFeatureType());
-
-      if (featurePropertyToMetacardAttributeMapper != null) {
-        featureConverter =
-            new GenericFeatureConverterWfs11(featurePropertyToMetacardAttributeMapper);
-        LOGGER.debug(
-            "WFS Source {}: Created {} for feature type {} with feature property to metacard attribute mapper.",
-            getId(),
-            featureConverter.getClass().getSimpleName(),
-            ftSimpleName);
-      } else {
-        featureConverter = new GenericFeatureConverterWfs11(srs);
-        featureConverter.setCoordinateOrder(coordinateOrder);
-        LOGGER.debug(
-            "WFS Source {}: Created {} for feature type {} with no feature property to metacard attribute mapper.",
-            getId(),
-            featureConverter.getClass().getSimpleName(),
-            ftSimpleName);
-      }
-    }
-
-    featureConverter.setSourceId(getId());
-    featureConverter.setMetacardType(ftMetacard);
-    featureConverter.setWfsUrl(wfsUrl);
-
-    // Add the Feature Type name as an alias for xstream
-    LOGGER.debug(
-        "Registering feature converter {} for feature type {}.",
-        featureConverter.getClass().getSimpleName(),
-        ftSimpleName);
-    featureCollectionReader.registerConverter(featureConverter);
-  }
 
   private MetacardTypeRegistration createFeatureMetacardTypeRegistration(
       FeatureTypeType featureTypeType, String ftName, XmlSchema schema) {
@@ -708,32 +654,6 @@ public class WfsSource extends AbstractWfsSource {
     LOGGER.debug("WfsSource {}: Registering MetacardType: {}", getId(), ftName);
 
     return new MetacardTypeRegistration(ftMetacard, props, featureTypeType.getDefaultSRS());
-  }
-
-  private MetacardMapper lookupMetacardAttributeToFeaturePropertyMapper(QName featureType) {
-    MetacardMapper metacardAttributeToFeaturePropertyMapper = null;
-
-    if (this.metacardToFeatureMappers != null) {
-      for (MetacardMapper mapper : this.metacardToFeatureMappers) {
-        if (mapper != null && StringUtils.equals(mapper.getFeatureType(), featureType.toString())) {
-          logFeatureType(featureType, "Found {} for feature type {}.");
-          metacardAttributeToFeaturePropertyMapper = mapper;
-          break;
-        }
-      }
-
-      if (metacardAttributeToFeaturePropertyMapper == null) {
-        logFeatureType(featureType, "Unable to find a {} for feature type {}.");
-      }
-    }
-
-    return metacardAttributeToFeaturePropertyMapper;
-  }
-
-  private void logFeatureType(QName featureType, String message) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug(message, MetacardMapper.class.getSimpleName(), featureType);
-    }
   }
 
   @Override
@@ -1085,10 +1005,6 @@ public class WfsSource extends AbstractWfsSource {
     this.forceSpatialFilter = forceSpatialFilter;
   }
 
-  public void setFeatureConverterFactoryList(List<FeatureConverterFactoryV110> factories) {
-    this.featureConverterFactories = factories;
-  }
-
   private String handleWebApplicationException(WebApplicationException wae) {
     Response response = wae.getResponse();
     WfsException wfsException = new WfsResponseExceptionMapper().fromResponse(response);
@@ -1211,14 +1127,6 @@ public class WfsSource extends AbstractWfsSource {
     this.coordinateOrder = coordinateOrder;
   }
 
-  public List<MetacardMapper> getMetacardToFeatureMapper() {
-    return this.metacardToFeatureMappers;
-  }
-
-  public void setMetacardToFeatureMapper(List<MetacardMapper> mappers) {
-    this.metacardToFeatureMappers = mappers;
-  }
-
   private boolean hasWfsUrlChanged(String wfsUrl) {
     return !StringUtils.equals(this.wfsUrl, wfsUrl);
   }
@@ -1285,5 +1193,21 @@ public class WfsSource extends AbstractWfsSource {
       }
       return newAvailability;
     }
+  }
+
+  public String getCoordinateOrder() {
+    return this.coordinateOrder;
+  }
+
+  public Supplier<String> getIdSupplier() {
+    return this::getId;
+  }
+
+  public Supplier<String> getWfsUrlSupplier() {
+    return this::getWfsUrl;
+  }
+
+  public Supplier<String> getCoordinateOrderSupplier() {
+    return this::getCoordinateOrder;
   }
 }
