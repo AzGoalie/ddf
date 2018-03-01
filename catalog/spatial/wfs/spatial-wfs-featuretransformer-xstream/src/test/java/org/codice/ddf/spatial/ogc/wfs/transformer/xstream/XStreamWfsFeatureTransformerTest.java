@@ -15,14 +15,12 @@ package org.codice.ddf.spatial.ogc.wfs.transformer.xstream;
 
 import static junit.framework.TestCase.assertTrue;
 
+import ddf.catalog.data.Metacard;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
-
-import ddf.catalog.data.Metacard;
 
 public class XStreamWfsFeatureTransformerTest {
   private XStreamWfsFeatureTransformer transformer;

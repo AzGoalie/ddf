@@ -324,7 +324,9 @@ public class WfsSourceTest {
             mockAvailabilityTask,
             mockFactory,
             encryptionService,
-            Collections.emptyList());
+            Collections.emptyList(),
+            null,
+            null);
   }
 
   @Test

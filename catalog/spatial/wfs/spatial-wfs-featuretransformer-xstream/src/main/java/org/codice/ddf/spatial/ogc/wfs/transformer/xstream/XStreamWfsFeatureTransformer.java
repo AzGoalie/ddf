@@ -31,8 +31,6 @@ import org.codice.ddf.spatial.ogc.wfs.v110.catalog.converter.impl.GenericFeature
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.thoughtworks.xstream.XStream;
-
 public class XStreamWfsFeatureTransformer implements FeatureTransformer {
   private static final Logger LOGGER = LoggerFactory.getLogger(XStreamWfsFeatureTransformer.class);
 

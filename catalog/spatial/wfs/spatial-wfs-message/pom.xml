@@ -64,19 +64,10 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Export-Package/>
                         <Import-Package>
-                            org.apache.camel,
-                            org.apache.camel.builder,
-                            org.apache.camel.builder.xml,
-                            org.apache.camel.component.bean,
-                            org.apache.camel.model,
-                            org.apache.camel.processor.aggregate,
-                            org.osgi.framework,
-                            org.codice.ddf.spatial.ogc.wfs.catalog.message.api,
-                            javax.ws.rs.ext
+                            *
                         </Import-Package>
                         <Embed-Dependency>
-                            platform-util,
-                            slf4j-api
+                            platform-util
                         </Embed-Dependency>
                         <Embed-Transitive>true</Embed-Transitive>
                     </instructions>

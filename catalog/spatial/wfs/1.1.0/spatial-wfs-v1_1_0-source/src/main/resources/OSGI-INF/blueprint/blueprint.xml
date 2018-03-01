@@ -31,8 +31,6 @@
                     interface="org.codice.ddf.spatial.ogc.wfs.catalog.MetacardTypeEnhancer"
                     availability="optional"/>
 
-    <bean id="wfsFeatureTransformer110" class="org.codice.ddf.spatial.ogc.wfs.transformer.xstream.XStreamWfsFeatureTransformer"/>
-
     <reference id="encryptionService" interface="ddf.security.encryption.EncryptionService"/>
 
     <reference id="wfsMessageBodyReader" interface="javax.ws.rs.ext.MessageBodyReader"/>
@@ -57,7 +55,6 @@
             <property name="nonQueryableProperties">
                 <list/>
             </property>
-            <property name="featureConverterFactoryList" ref="converterList"/>
             <property name="pollInterval" value="5"/>
             <property name="forceSpatialFilter" value="NO_FILTER"/>
             <property name="connectionTimeout" value="30000"/>
@@ -72,6 +69,4 @@
                                    update-method="refresh"/>
         </cm:managed-component>
     </cm:managed-service-factory>
-
-    <service ref="wfsFeatureTransformer110" interface="org.codice.ddf.spatial.ogc.wfs.catalog.message.api.FeatureTransformer"/>
 </blueprint>
