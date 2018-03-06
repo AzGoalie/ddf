@@ -34,11 +34,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ws.commons.schema.XmlSchema;
 import org.codice.ddf.cxf.SecureCxfClientFactory;
-import org.codice.ddf.libs.geo.util.GeospatialUtil;
 import org.codice.ddf.spatial.ogc.wfs.catalog.MetacardTypeEnhancer;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.FeatureMetacardType;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.WfsException;
-import org.codice.ddf.spatial.ogc.wfs.catalog.common.WfsFeatureCollection;
 import org.codice.ddf.spatial.ogc.wfs.catalog.converter.FeatureConverter;
 import org.codice.ddf.spatial.ogc.wfs.catalog.converter.impl.GmlEnvelopeConverter;
 import org.codice.ddf.spatial.ogc.wfs.catalog.converter.impl.GmlGeometryConverter;
@@ -80,20 +78,19 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
   public XStreamWfsFeatureTransformer(
       Supplier<String> idSupplier,
       Supplier<String> wfsUrlSupplier,
-      Supplier<String> coordinateOrderSupplier) {
+      Supplier<String> coordinateOrderSupplier,
+      SecureCxfClientFactory<Wfs> factory,
+      List<MetacardTypeEnhancer> metacardTypeEnhancers,
+      List<MetacardMapper> metacardMappers) {
     this.idSupplier = idSupplier;
     this.wfsUrlSupplier = wfsUrlSupplier;
     this.coordinateOrderSupplier = coordinateOrderSupplier;
     this.metacardToFeatureMappers = Collections.emptyList();
 
-    initializeXstream();
-  }
+    this.factory = factory;
+    this.metacardToFeatureMappers = metacardMappers;
+    this.metacardTypeEnhancers = metacardTypeEnhancers;
 
-  public XStreamWfsFeatureTransformer() {
-    this.idSupplier = () -> "";
-    this.wfsUrlSupplier = () -> "";
-    this.coordinateOrderSupplier = () -> GeospatialUtil.LAT_LON_ORDER;
-    this.metacardToFeatureMappers = Collections.emptyList();
     initializeXstream();
   }
 
@@ -103,11 +100,11 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
     xstream.setClassLoader(this.getClass().getClassLoader());
     xstream.registerConverter(new GmlGeometryConverter());
     xstream.registerConverter(new GmlEnvelopeConverter());
-    xstream.alias("FeatureCollection", WfsFeatureCollection.class);
+    xstream.alias("featureMember", Metacard.class);
 
     WFSCapabilitiesType capabilitiesType = getCapabilities();
 
-    if (capabilitiesType != null) {
+    if (capabilitiesType != null && capabilitiesType.getFeatureTypeList() != null) {
       for (FeatureTypeType type : capabilitiesType.getFeatureTypeList().getFeatureType()) {
         String simpleName = type.getName().getLocalPart();
 
@@ -155,8 +152,8 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
 
   @Override
   public Optional<Metacard> apply(InputStream inputStream) {
-    xstream.allowTypeHierarchy(Metacard.class);
     Metacard metacard = null;
+    xstream.allowTypeHierarchy(Metacard.class);
     try {
       metacard = (Metacard) xstream.fromXML(inputStream);
     } catch (Exception e) {
@@ -172,10 +169,6 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
 
   public void setFeatureConverterFactoryList(List<FeatureConverterFactoryV110> factories) {
     this.featureConverterFactories = factories;
-  }
-
-  public void setFactory(SecureCxfClientFactory<Wfs> factory) {
-    this.factory = factory;
   }
 
   public void setMetacardTypeEnhancers(List<MetacardTypeEnhancer> metacardTypeEnhancers) {

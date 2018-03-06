@@ -12,7 +12,8 @@
  **/
 
  -->
-<gml:featureMember xmlns:wfs="http://www.opengis.net/wfs" xmlns:gin="http://www.nga.mil/gims/gin" xmlns:gml="http://www.opengis.net/gml" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" numberOfFeatures="10" timeStamp="2018-01-18T15:30:16.041Z">
+<gml:featureMember xmlns:gin="http://www.nga.mil/gims/gin" xmlns:gml="http://www.opengis.net/gml"
+  numberOfFeatures="10" timeStamp="2018-01-18T15:30:16.041Z">
     <gin:GeneralGIN gml:id="gin.1">
         <gin:CountryCode>GBR</gin:CountryCode>
         <gin:GeneralGINFriends></gin:GeneralGINFriends>
@@ -33,4 +34,5 @@
             </gml:Point>
         </gin:SpatialData>
     </gin:GeneralGIN>
+    <gin:TEST_ELEMENT>hello, world!</gin:TEST_ELEMENT>
 </gml:featureMember>
