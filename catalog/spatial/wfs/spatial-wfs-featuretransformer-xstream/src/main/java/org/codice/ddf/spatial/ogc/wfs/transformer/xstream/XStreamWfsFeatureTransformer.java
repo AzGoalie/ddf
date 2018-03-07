@@ -34,6 +34,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ws.commons.schema.XmlSchema;
 import org.codice.ddf.cxf.SecureCxfClientFactory;
+import org.codice.ddf.libs.geo.util.GeospatialUtil;
 import org.codice.ddf.spatial.ogc.wfs.catalog.MetacardTypeEnhancer;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.FeatureMetacardType;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.WfsException;
@@ -59,7 +60,7 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
 
   private static final String SOURCE_MSG = " Source '";
 
-  private final Supplier<String> coordinateOrderSupplier;
+  private Supplier<String> coordinateOrderSupplier;
 
   private Supplier<String> idSupplier;
 
@@ -74,6 +75,16 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
   private SecureCxfClientFactory<Wfs> factory;
 
   private XStream xstream;
+
+  public XStreamWfsFeatureTransformer() {
+    this.idSupplier = () -> "";
+    this.wfsUrlSupplier = () -> "";
+    this.coordinateOrderSupplier = () -> GeospatialUtil.LAT_LON_ORDER;
+
+    this.metacardToFeatureMappers = Collections.emptyList();
+    this.metacardTypeEnhancers = Collections.emptyList();
+    this.featureConverterFactories = Collections.emptyList();
+  }
 
   public XStreamWfsFeatureTransformer(
       Supplier<String> idSupplier,
@@ -90,7 +101,9 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
     this.factory = factory;
     this.metacardToFeatureMappers = metacardMappers;
     this.metacardTypeEnhancers = metacardTypeEnhancers;
+  }
 
+  public void init() {
     initializeXstream();
   }
 
@@ -173,6 +186,22 @@ public class XStreamWfsFeatureTransformer implements FeatureTransformer {
 
   public void setMetacardTypeEnhancers(List<MetacardTypeEnhancer> metacardTypeEnhancers) {
     this.metacardTypeEnhancers = metacardTypeEnhancers;
+  }
+
+  public void setFactory(SecureCxfClientFactory<Wfs> factory) {
+    this.factory = factory;
+  }
+
+  public void setIdSupplier(Supplier<String> idSupplier) {
+    this.idSupplier = idSupplier;
+  }
+
+  public void setWfsUrlSupplier(Supplier<String> wfsUrlSupplier) {
+    this.wfsUrlSupplier = wfsUrlSupplier;
+  }
+
+  public void setCoordinateOrderSupplier(Supplier<String> coordinateOrderSupplier) {
+    this.coordinateOrderSupplier = coordinateOrderSupplier;
   }
 
   public List<MetacardMapper> getMetacardToFeatureMapper() {

@@ -24,7 +24,6 @@ import ddf.catalog.data.Metacard;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import javax.xml.namespace.QName;
 import net.opengis.wfs.v_1_1_0.FeatureTypeListType;
@@ -61,16 +60,11 @@ public class XStreamWfsFeatureTransformerTest {
         .thenReturn("title");
 
     // TODO: Set proper feature converter factories
-    List<MetacardMapper> metacardMapperList = Collections.singletonList(metacardMapper);
 
-    this.transformer =
-        new XStreamWfsFeatureTransformer(
-            () -> "id",
-            () -> "url",
-            () -> "coord",
-            factory,
-            Collections.emptyList(),
-            metacardMapperList);
+    this.transformer = new XStreamWfsFeatureTransformer();
+    this.transformer.setFactory(factory);
+    this.transformer.setMetacardToFeatureMapper(Collections.singletonList(metacardMapper));
+    this.transformer.init();
   }
 
   @Test

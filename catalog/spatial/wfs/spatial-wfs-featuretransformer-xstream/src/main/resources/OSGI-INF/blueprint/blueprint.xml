@@ -13,11 +13,25 @@
  **/
 -->
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0
            http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
 
-    <bean id="wfsFeatureTransformer110" class="org.codice.ddf.spatial.ogc.wfs.transformer.xstream.XStreamWfsFeatureTransformer"/>
+    <reference-list id="metacardMappers"
+      interface="org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper"/>
+    <reference-list id="metacardTypeEnhancers"
+      interface="org.codice.ddf.spatial.ogc.wfs.catalog.MetacardTypeEnhancer"/>
+    <reference-list id="featureConverters"
+      interface="org.codice.ddf.spatial.ogc.wfs.v110.catalog.converter.FeatureConverterFactoryV110"/>
 
-    <service ref="wfsFeatureTransformer110" interface="org.codice.ddf.spatial.ogc.wfs.catalog.message.api.FeatureTransformer"/>
+    <bean id="wfsFeatureTransformer110"
+      class="org.codice.ddf.spatial.ogc.wfs.transformer.xstream.XStreamWfsFeatureTransformer"
+      init-method="init">
+        <property name="metacardToFeatureMapper" ref="metacardMappers"/>
+        <property name="metacardTypeEnhancers" ref="metacardTypeEnhancers"/>
+        <property name="featureConverterFactoryList" ref="featureConverters"/>
+    </bean>
+
+    <service ref="wfsFeatureTransformer110"
+      interface="org.codice.ddf.spatial.ogc.wfs.catalog.message.api.FeatureTransformer"/>
 </blueprint>
