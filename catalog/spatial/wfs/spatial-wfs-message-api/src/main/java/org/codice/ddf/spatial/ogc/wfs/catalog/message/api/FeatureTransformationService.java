@@ -16,7 +16,6 @@ package org.codice.ddf.spatial.ogc.wfs.catalog.message.api;
 import ddf.catalog.data.Metacard;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 
 /**
@@ -26,7 +25,7 @@ import java.util.function.BiFunction;
  * of them returns something other than Optional.empty() or there are no FeatureTransformers left.
  */
 public interface FeatureTransformationService
-    extends BiFunction<InputStream, WfsMetadata, List<Optional<Metacard>>> {
+    extends BiFunction<InputStream, WfsMetadata, List<Metacard>> {
 
   /**
    * @param featureCollection - the WFS response XML to be de-serialized.
@@ -34,5 +33,5 @@ public interface FeatureTransformationService
    * @return an Optional containing a java.util.List of Metacards (one for each FeatureMember in the
    *     WFS response XML) or Optional.empty().
    */
-  List<Optional<Metacard>> apply(InputStream featureCollection, WfsMetadata metadata);
+  List<Metacard> apply(InputStream featureCollection, WfsMetadata metadata);
 }

@@ -135,10 +135,8 @@
           <instructions>
             <Embed-Dependency>
               catalog-core-api-impl,
-              filter-v_1_1_0,
               filter-v_2_0_0-schema,
               geospatial,
-              gml-v_3_1_1,
               gml-v_3_2_1-schema,
               jaxb2-basics-runtime,
               ows-v_1_1_0-schema,
@@ -151,8 +149,7 @@
               spatial-wfs-v1_1_0-converter,
               spatial-wfs-v2_0_0-common,
               spatial-wfs-v2_0_0-converter,
-              spatial-wfs-v2_0_0-schema-bindings,
-              wfs-v_1_1_0,
+              spatial-wfs-v2_0_0-schema-bindings
             </Embed-Dependency>
           </instructions>
         </configuration>

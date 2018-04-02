@@ -17,10 +17,7 @@ import ddf.catalog.data.Metacard;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -65,18 +62,7 @@ public class WfsMessageBodyReader implements MessageBodyReader<WfsFeatureCollect
       MultivaluedMap<String, String> multivaluedMap,
       InputStream inputStream) {
 
-    List<Optional<Metacard>> featureMemberOptionals =
-        featureTransformationService.apply(inputStream, wfsMetadata);
-    List<Metacard> featureMembers = new ArrayList<>();
-
-    if (featureMembers != null) {
-      featureMembers =
-          featureMemberOptionals
-              .stream()
-              .filter(Optional::isPresent)
-              .map(Optional::get)
-              .collect(Collectors.toList());
-    }
+    List<Metacard> featureMembers = featureTransformationService.apply(inputStream, wfsMetadata);
 
     WfsFeatureCollection result = new WfsFeatureCollection();
     result.setFeatureMembers(featureMembers);

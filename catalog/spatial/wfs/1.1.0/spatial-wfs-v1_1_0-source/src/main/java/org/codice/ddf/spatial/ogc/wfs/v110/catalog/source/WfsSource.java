@@ -16,7 +16,6 @@ package org.codice.ddf.spatial.ogc.wfs.v110.catalog.source;
 import ddf.catalog.Constants;
 import ddf.catalog.data.ContentType;
 import ddf.catalog.data.Metacard;
-import ddf.catalog.data.MetacardType;
 import ddf.catalog.data.Result;
 import ddf.catalog.data.impl.ContentTypeImpl;
 import ddf.catalog.data.impl.ResultImpl;
@@ -111,7 +110,6 @@ import org.codice.ddf.spatial.ogc.wfs.v110.catalog.source.reader.XmlSchemaMessag
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -545,7 +543,7 @@ public class WfsSource extends AbstractWfsSource {
 
     // Use local Map for metacardtype registrations and once they are populated with latest
     // MetacardTypes, then do actual registration
-    Map<String, MetacardTypeRegistration> mcTypeRegs = new HashMap<>();
+    Map<String, FeatureMetacardType> mcTypeRegs = new HashMap<>();
     this.featureTypeFilters.clear();
 
     for (FeatureTypeType featureTypeType : featureTypes) {
@@ -589,6 +587,10 @@ public class WfsSource extends AbstractWfsSource {
           this.featureTypeFilters.put(
               featureMetacardType.getFeatureType(),
               new WfsFilterDelegate(featureMetacardType, supportedGeo));
+
+          mcTypeRegs.put(ftSimpleName, featureMetacardType);
+
+          ((WfsMetadataImpl<FeatureTypeType>) wfsMetadata).addEntry(featureTypeType);
         }
       } catch (WfsException | IllegalArgumentException wfse) {
         LOGGER.debug(WFS_ERROR_MESSAGE, wfse);
@@ -606,10 +608,10 @@ public class WfsSource extends AbstractWfsSource {
         "Wfs Source {}: Number of validated Features = {}", getId(), featureTypeFilters.size());
   }
 
-  private void registerFeatureMetacardTypes(Map<String, MetacardTypeRegistration> mcTypeRegs) {
+  private void registerFeatureMetacardTypes(Map<String, FeatureMetacardType> mcTypeRegs) {
     // Unregister all MetacardType services - the DescribeFeatureTypeRequest should
     // have returned all of the most current metacard types that will now be registered.
-    // As Source(s) are added/removed from this instance or to other Source(s)
+    // As Source(s) are added/cemoved from this instance or to other Source(s)
     // that this instance is federated to, the list of metacard types will change.
     // This is done here vs. inside the above loop so that minimal time is spent clearing and
     // registering the MetacardTypes - the concern is that if this registration is too lengthy
@@ -618,15 +620,9 @@ public class WfsSource extends AbstractWfsSource {
     wfsMetacardTypeRegistry.clear();
 
     if (!mcTypeRegs.isEmpty()) {
-      for (MetacardTypeRegistration registration : mcTypeRegs.values()) {
-        FeatureMetacardType ftMetacard = registration.getFtMetacard();
-        String simpleName = ftMetacard.getFeatureType().getLocalPart();
-
-        wfsMetacardTypeRegistry.registerMetacardType(ftMetacard, this.getId(), simpleName);
-
-        ServiceRegistration serviceRegistration =
-            context.registerService(
-                MetacardType.class.getName(), ftMetacard, registration.getProps());
+      for (FeatureMetacardType metacardType : mcTypeRegs.values()) {
+        String simpleName = metacardType.getFeatureType().getLocalPart();
+        wfsMetacardTypeRegistry.registerMetacardType(metacardType, this.getId(), simpleName);
       }
     }
   }
@@ -722,7 +718,7 @@ public class WfsSource extends AbstractWfsSource {
 
     LOGGER.debug("WfsSource {}: Registering MetacardType: {}", getId(), ftName);
 
-    wfsMetacardTypeRegistry.registerMetacardType(ftMetacard, this.getId(), ftName);
+    //    wfsMetacardTypeRegistry.registerMetacardType(ftMetacard, this.getId(), ftName);
 
     return ftMetacard;
     // return new MetacardTypeRegistration(ftMetacard, props, featureTypeType.getDefaultSRS());

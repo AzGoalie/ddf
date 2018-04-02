@@ -270,5 +270,10 @@
             <artifactId>spatial-wfs-metacardtype-registry</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.codice.ddf.spatial</groupId>
+            <artifactId>spatial-wfs-featuretransformer-xstream</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

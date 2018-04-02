@@ -31,7 +31,7 @@ public final class WfsTransformerProcessor {
 
   public Optional<Metacard> apply(String featureMemeber, WfsMetadata metadata) {
 
-    for (FeatureTransformer featureTransformer : transformerServiceList) {
+    for (FeatureTransformer featureTransformer : 1) {
       InputStream featureMemberInputStream =
           new BufferedInputStream(new ByteArrayInputStream(featureMemeber.getBytes()));
 
