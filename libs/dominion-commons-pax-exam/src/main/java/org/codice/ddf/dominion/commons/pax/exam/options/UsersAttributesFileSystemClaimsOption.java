@@ -13,17 +13,15 @@
  */
 package org.codice.ddf.dominion.commons.pax.exam.options;
 
+import com.google.gson.reflect.TypeToken;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.lang.reflect.Type;
 import java.util.Map;
 import javax.annotation.Nullable;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.boon.Boon;
 import org.codice.dominion.pax.exam.interpolate.PaxExamInterpolator;
 import org.codice.dominion.pax.exam.options.KarafDistributionConfigurationFileContentOption;
 
@@ -87,10 +85,10 @@ public class UsersAttributesFileSystemClaimsOption extends UsersAttributesFileCo
             interpolator.getKarafEtc(), UsersAttributesFileSystemClaimsOption.PROFILES_JSON);
     final Map<String, Map<String, Map<String, Object>>> profiles;
 
-    try (final InputStream is = new FileInputStream(profilesFilePath)) {
-      profiles =
-          (Map<String, Map<String, Map<String, Object>>>)
-              Boon.fromJson(IOUtils.toString(is, Charset.defaultCharset()));
+    try (final FileReader is = new FileReader(profilesFilePath)) {
+      Type collectionType =
+          new TypeToken<Map<String, Map<String, Map<String, Object>>>>() {}.getType();
+      profiles = GSON.fromJson(is, collectionType);
     } catch (FileNotFoundException e) {
       throw new IllegalArgumentException("security profile '" + profile + "' not found", e);
     }

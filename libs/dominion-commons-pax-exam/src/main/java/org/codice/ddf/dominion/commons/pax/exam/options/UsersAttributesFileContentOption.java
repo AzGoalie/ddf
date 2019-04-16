@@ -13,17 +13,17 @@
  */
 package org.codice.ddf.dominion.commons.pax.exam.options;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
-import org.boon.Boon;
-import org.boon.json.JsonFactory;
-import org.boon.json.ObjectMapper;
 import org.codice.dominion.pax.exam.interpolate.PaxExamInterpolator;
 import org.codice.dominion.pax.exam.options.KarafDistributionConfigurationFileContentOption;
 
@@ -39,7 +39,7 @@ public abstract class UsersAttributesFileContentOption
     extends KarafDistributionConfigurationFileContentOption {
   private static final String USERS_ATTRIBUTES = "etc/users.attributes";
 
-  protected static final ObjectMapper MAPPER = JsonFactory.create();
+  protected static final Gson GSON = new Gson();
 
   /**
    * Creates a new users.attributes content PaxExam option.
@@ -55,10 +55,9 @@ public abstract class UsersAttributesFileContentOption
     final Map<String, Map<String, Object>> json;
 
     if (original.exists()) {
-      try (final InputStream stream = Files.newInputStream(Paths.get(original.toURI()))) {
-        json =
-            (Map<String, Map<String, Object>>)
-                (Map) UsersAttributesFileContentOption.MAPPER.parser().parseMap(stream);
+      try (final BufferedReader stream = Files.newBufferedReader(Paths.get(original.toURI()))) {
+        Type collectionType = new TypeToken<Map<String, Object>>() {}.getType();
+        json = GSON.fromJson(stream, collectionType);
       }
     } else {
       json = new HashMap<>();
@@ -68,7 +67,7 @@ public abstract class UsersAttributesFileContentOption
         Files.createTempFile(UsersAttributesFileContentOption.class.getName(), ".tmp").toFile();
 
     temp.deleteOnExit();
-    FileUtils.writeStringToFile(temp, Boon.toPrettyJson(json), Charset.defaultCharset());
+    FileUtils.writeStringToFile(temp, GSON.toJson(json), Charset.defaultCharset());
     return temp;
   }
 
