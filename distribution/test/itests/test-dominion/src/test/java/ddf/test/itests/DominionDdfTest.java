@@ -16,6 +16,8 @@ package ddf.test.itests;
 import org.codice.ddf.dominion.commons.options.DDFCommonOptions;
 import org.codice.ddf.dominion.options.DDFOptions;
 import org.codice.dominion.Dominion;
+import org.codice.pax.exam.junit.ConfigurationAdmin;
+import org.codice.pax.exam.junit.ServiceAdmin;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -26,6 +28,8 @@ import org.slf4j.LoggerFactory;
 @DDFCommonOptions.ConfigurePorts
 @DDFCommonOptions.ConfigureLogging
 @DDFOptions.InstallDistribution(solr = true)
+@ConfigurationAdmin
+@ServiceAdmin
 @RunWith(Dominion.class)
 public class DominionDdfTest {
   private final Logger logger = LoggerFactory.getLogger(DominionDdfTest.class);
