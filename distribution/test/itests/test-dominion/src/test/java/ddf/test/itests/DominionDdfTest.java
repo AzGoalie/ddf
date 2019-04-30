@@ -13,6 +13,7 @@
  */
 package ddf.test.itests;
 
+import ddf.test.itests.annotations.ClearCatalog;
 import org.codice.ddf.dominion.commons.options.DDFCommonOptions;
 import org.codice.ddf.dominion.options.DDFOptions;
 import org.codice.dominion.Dominion;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 @DDFCommonOptions.ConfigurePorts
 @DDFCommonOptions.ConfigureLogging
 @DDFOptions.InstallDistribution(solr = true)
+@ClearCatalog
 @ConfigurationAdmin
 @ServiceAdmin
 @RunWith(Dominion.class)
