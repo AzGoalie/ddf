@@ -16,10 +16,25 @@ package ddf.test.itests.rules;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClearCatalog implements MethodRule {
-    @Override
-    public Statement apply(Statement statement, FrameworkMethod frameworkMethod, Object o) {
-        return null;
-    }
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClearCatalog.class);
+
+  @Override
+  public Statement apply(Statement statement, FrameworkMethod frameworkMethod, Object o) {
+    return new Statement() {
+      @Override
+      public void evaluate() throws Throwable {
+        try {
+          LOGGER.error("Clearing Catalog");
+          statement.evaluate();
+        } finally {
+          Thread.interrupted();
+        }
+      }
+    };
+  }
 }

@@ -34,10 +34,11 @@ import org.slf4j.LoggerFactory;
 @ServiceAdmin
 @RunWith(Dominion.class)
 public class DominionDdfTest {
-  private final Logger logger = LoggerFactory.getLogger(DominionDdfTest.class);
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DominionDdfTest.class);
 
   @Test
   public void test() {
-    logger.error("Hello, World!");
+    LOGGER.error("Hello, World!");
   }
 }
