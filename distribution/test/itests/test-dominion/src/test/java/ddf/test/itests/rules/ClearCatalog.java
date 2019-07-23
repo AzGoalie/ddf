@@ -13,6 +13,8 @@
  */
 package ddf.test.itests.rules;
 
+import static com.jayway.restassured.RestAssured.given;
+
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -23,6 +25,8 @@ public class ClearCatalog implements MethodRule {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClearCatalog.class);
 
+  private static final String SOLR_PORT = System.getProperty("solr.http.port");
+
   @Override
   public Statement apply(Statement statement, FrameworkMethod frameworkMethod, Object o) {
     return new Statement() {
@@ -30,6 +34,18 @@ public class ClearCatalog implements MethodRule {
       public void evaluate() throws Throwable {
         try {
           LOGGER.error("Clearing Catalog");
+
+          given()
+              .log()
+              .all()
+              .header("Content-Type", "application/xml")
+              .auth()
+              .preemptive()
+              .basic("admin", "admin")
+              .header("X-Requested-With", "XMLHttpRequest")
+              .body("<delete><query>*:*</query></delete>")
+              .post("https://localhost:" + SOLR_PORT + "/solr/catalog/update?commit=true");
+
           statement.evaluate();
         } finally {
           Thread.interrupted();

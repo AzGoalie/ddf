@@ -18,10 +18,16 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.codice.dominion.options.Options.UpdateConfigProperty;
 import org.codice.junit.ExtensionMethodRuleAnnotation;
 
 @ExtensionMethodRuleAnnotation(ddf.test.itests.rules.ClearCatalog.class)
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
+@UpdateConfigProperty(
+  target = "etc/custom.system.properties",
+  key = "solr.attemptAutoPasswordChange",
+  value = "false"
+)
 public @interface ClearCatalog {}
